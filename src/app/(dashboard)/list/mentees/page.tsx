@@ -21,16 +21,16 @@ const columns = [
     header: "Info",
     accessor: "info",
   },
-  {
-    header: "Student ID",
-    accessor: "studentId",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Grade",
-    accessor: "grade",
-    className: "hidden md:table-cell",
-  },
+  // {
+  //   header: "Student ID",
+  //   accessor: "studentId",
+  //   className: "hidden md:table-cell",
+  // },
+  // {
+  //   header: "Grade",
+  //   accessor: "grade",
+  //   className: "hidden md:table-cell",
+  // },
   {
     header: "Phone",
     accessor: "phone",
@@ -65,8 +65,8 @@ const MenteeListPage = () => {
           <p className="text-xs text-gray-500">{item.class}</p>
         </div>
       </td>
-      <td className="hidden md:table-cell">{item.studentId}</td>
-      <td className="hidden md:table-cell">{item.grade}</td>
+      {/* <td className="hidden md:table-cell">{item.studentId}</td> */}
+      {/* <td className="hidden md:table-cell">{item.grade}</td> */}
       <td className="hidden md:table-cell">{item.phone}</td>
       <td className="hidden md:table-cell">{item.address}</td>
       <td>

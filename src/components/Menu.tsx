@@ -64,12 +64,12 @@ const menuItems = [
         href: "/settings",
         visible: ["admin", "mentor", "student", "parent"],
       },
-      {
-        icon: "/logout.png",
-        label: "Logout",
-        href: "/logout",
-        visible: ["admin", "mentor", "student", "parent"],
-      },
+      // {
+      //   icon: "/logout.png",
+      //   label: "Logout",
+      //   href: "/logout",
+      //   visible: ["admin", "mentor", "student", "parent"],
+      // },
     ],
   },
 ];
