@@ -1,4 +1,11 @@
 // TEMPORARY DATA
+interface CalendarEvent {
+  id: number;
+  title: string;
+  allDay: boolean;
+  start: Date;
+  end: Date;
+}
 
 export let role = "admin";
 
@@ -916,65 +923,4 @@ export const announcementsData = [
 ];
 
 // YOU SHOULD CHANGE THE DATES OF THE EVENTS TO THE CURRENT DATE TO SEE THE EVENTS ON THE CALENDAR
-export const calendarEvents = [
-  {
-    title: "Math",
-    allDay: false,
-    start: new Date(2025, 1, 5, 8, 0),
-    end: new Date(2025, 1, 5, 8, 45),
-  },
-  {
-    title: "English",
-    allDay: false,
-    start: new Date(2025, 1, 12, 9, 0),
-    end: new Date(2025, 1, 12, 9, 45),
-  },
-  {
-    title: "Biology",
-    allDay: false,
-    start: new Date(2025, 1, 8, 10, 0),
-    end: new Date(2025, 1, 8, 10, 45),
-  },
-  {
-    title: "Physics",
-    allDay: false,
-    start: new Date(2025, 1, 17, 11, 0),
-    end: new Date(2025, 1, 17, 11, 45),
-  },
-  {
-    title: "Chemistry",
-    allDay: false,
-    start: new Date(2025, 2, 3, 13, 0),
-    end: new Date(2025, 2, 3, 13, 45),
-  },
-  {
-    title: "History",
-    allDay: false,
-    start: new Date(2025, 2, 9, 14, 0),
-    end: new Date(2025, 2, 9, 14, 45),
-  },
-  {
-    title: "English",
-    allDay: false,
-    start: new Date(2025, 2, 5, 9, 0),
-    end: new Date(2025, 2, 5, 9, 45),
-  },
-  {
-    title: "Biology",
-    allDay: false,
-    start: new Date(2025, 1, 28, 10, 0),
-    end: new Date(2025, 1, 28, 10, 45),
-  },
-  {
-    title: "Physics",
-    allDay: false,
-    start: new Date(2025, 2, 7, 11, 0),
-    end: new Date(2025, 2, 7, 11, 45),
-  },
-  {
-    title: "History",
-    allDay: false,
-    start: new Date(2025, 2, 10, 14, 0),
-    end: new Date(2025, 2, 10, 14, 45),
-  },
-];
+export const calendarEvents: CalendarEvent[] = [];
