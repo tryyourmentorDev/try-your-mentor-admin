@@ -1,0 +1,115 @@
+import { getMentorAction } from "@/actions/mentor";
+import MentorStatusBadge from "@/components/MentorStatusBadge";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+
+const MentorDetailPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
+  const { id } = await params;
+  const response = await getMentorAction(id);
+
+  if (response.error) {
+    if (response.message === "Mentor not found") {
+      notFound();
+    }
+    return (
+      <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+        <p className="text-red-600 text-sm">
+          Failed to load mentor: {response.message}
+        </p>
+      </div>
+    );
+  }
+
+  const mentor = response.data!;
+  const fullName =
+    [mentor.firstName, mentor.lastName].filter(Boolean).join(" ") || "—";
+
+  return (
+    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
+      <div className="w-full xl:w-2/3">
+        <div className="bg-white p-4 rounded-md flex gap-4">
+          <div className="w-1/3">
+            <Image
+              src="/noAvatar.png"
+              alt=""
+              width={144}
+              height={144}
+              className="w-36 h-36 rounded-full object-cover"
+            />
+          </div>
+          <div className="w-2/3 flex flex-col gap-4 justify-between">
+            <h1 className="text-xl font-semibold">{fullName}</h1>
+            <p className="text-sm text-gray-500">{mentor.bio ?? "—"}</p>
+            <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
+              <span className="w-full md:w-1/2 lg:w-full 2xl:w-1/2">
+                {mentor.email}
+              </span>
+              <span className="w-full md:w-1/2 lg:w-full 2xl:w-1/2 flex items-center gap-2">
+                Status: <MentorStatusBadge status={mentor.status} />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 bg-white p-4 rounded-md grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Job Role</span>
+            <span className="text-sm font-medium">
+              {mentor.jobRole ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Highest Qualification</span>
+            <span className="text-sm font-medium">
+              {mentor.highestQualification ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Experience</span>
+            <span className="text-sm font-medium">
+              {mentor.experienceYears != null
+                ? `${mentor.experienceYears} years`
+                : "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Level of Service</span>
+            <span className="text-sm font-medium">
+              {mentor.levelOfService ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Rating</span>
+            <span className="text-sm font-medium">
+              {mentor.rating ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Charge</span>
+            <span className="text-sm font-medium">
+              {mentor.charge != null ? mentor.charge.toLocaleString() : "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Mentor Type</span>
+            <span className="text-sm font-medium">
+              {mentor.mentorType ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Joined</span>
+            <span className="text-sm font-medium">
+              {new Date(mentor.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MentorDetailPage;
