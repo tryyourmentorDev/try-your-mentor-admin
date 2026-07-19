@@ -42,3 +42,16 @@ export const MentorSchema = z.object({
 });
 
 export type MentorFormValues = z.infer<typeof MentorSchema>;
+
+export const MenteeSchema = z.object({
+  userId: z.number().optional(), // present only when editing
+  firstName: z.string().min(1, { message: "First name is required!" }),
+  lastName: optionalString,
+  email: z.string().email({ message: "Invalid email address!" }),
+  educationQualificationId: optionalNumber,
+  currentJobRoleId: optionalNumber,
+  expectedJobRoleId: optionalNumber,
+  experienceYears: optionalNumber,
+});
+
+export type MenteeFormValues = z.infer<typeof MenteeSchema>;

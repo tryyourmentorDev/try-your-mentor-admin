@@ -3,13 +3,18 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MentorForm from "./forms/MentorForm";
+import MenteeForm from "./forms/MenteeForm";
 import SessionForm from "./forms/SessionForm";
 import { deleteMentorAction } from "../actions/mentor";
+import { deleteMenteeAction } from "../actions/mentee";
 import { deleteSessionAction } from "../actions/session";
 import { Mentor } from "../entities/mentor-entity";
+import { Mentee } from "../entities/mentee-entity";
 import { Session } from "../entities/session-entity";
 import { JobRole } from "../entities/job-role-entity";
 import { Qualification } from "../entities/qualification-entity";
+
+const HARD_DELETE_TABLES = ["mentee", "session"] as const;
 
 const FormModel = ({
   table,
@@ -22,7 +27,7 @@ const FormModel = ({
 }: {
   table: "mentor" | "mentee" | "session";
   type: "create" | "update" | "delete";
-  data?: Mentor | Session;
+  data?: Mentor | Mentee | Session;
   id?: number | string;
   jobRoles?: JobRole[];
   qualifications?: Qualification[];
@@ -43,7 +48,7 @@ const FormModel = ({
 
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || (table !== "mentor" && table !== "session")) return;
+    if (!id) return;
 
     setDeleting(true);
     setDeleteError(null);
@@ -51,6 +56,8 @@ const FormModel = ({
     const response =
       table === "mentor"
         ? await deleteMentorAction(Number(id))
+        : table === "mentee"
+        ? await deleteMenteeAction(Number(id))
         : await deleteSessionAction(Number(id));
 
     if (response.error) {
@@ -66,8 +73,10 @@ const FormModel = ({
 
   const renderForm = () => {
     if (type === "delete" && id) {
-      // Mentor delete is a soft-deactivate; session delete is a hard delete.
-      const isSoft = table === "mentor";
+      // Mentor delete is a soft-deactivate; mentee/session delete are hard.
+      const isSoft = !HARD_DELETE_TABLES.includes(
+        table as (typeof HARD_DELETE_TABLES)[number]
+      );
       return (
         <form onSubmit={handleDelete} className="p-4 flex flex-col gap-4">
           <span className="text-center font-medium">
@@ -100,6 +109,18 @@ const FormModel = ({
         <MentorForm
           type={type}
           data={data as Mentor}
+          jobRoles={jobRoles}
+          qualifications={qualifications}
+          onSuccess={() => setOpen(false)}
+        />
+      );
+    }
+
+    if (table === "mentee" && (type === "create" || type === "update")) {
+      return (
+        <MenteeForm
+          type={type}
+          data={data as Mentee}
           jobRoles={jobRoles}
           qualifications={qualifications}
           onSuccess={() => setOpen(false)}
