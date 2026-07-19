@@ -3,7 +3,6 @@ import { getJobRoleListAction } from "@/actions/jobRole";
 import { getQualificationListAction } from "@/actions/qualification";
 import FormModel from "@/components/FromModel";
 import { role } from "@/lib/data";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 
 const MenteeDetailPage = async ({
@@ -41,32 +40,21 @@ const MenteeDetailPage = async ({
   return (
     <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
       <div className="w-full xl:w-2/3">
-        <div className="bg-white p-4 rounded-md flex gap-4">
-          <div className="w-1/3">
-            <Image
-              src="/noAvatar.png"
-              alt=""
-              width={144}
-              height={144}
-              className="w-36 h-36 rounded-full object-cover"
-            />
+        <div className="bg-white p-4 rounded-md flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-xl font-semibold">{fullName}</h1>
+            {role === "admin" && (
+              <FormModel
+                table="mentee"
+                type="update"
+                data={mentee}
+                id={mentee.userId}
+                jobRoles={jobRoles}
+                qualifications={qualifications}
+              />
+            )}
           </div>
-          <div className="w-2/3 flex flex-col gap-4 justify-between">
-            <div className="flex items-center justify-between gap-2">
-              <h1 className="text-xl font-semibold">{fullName}</h1>
-              {role === "admin" && (
-                <FormModel
-                  table="mentee"
-                  type="update"
-                  data={mentee}
-                  id={mentee.userId}
-                  jobRoles={jobRoles}
-                  qualifications={qualifications}
-                />
-              )}
-            </div>
-            <p className="text-sm text-gray-500">{mentee.email}</p>
-          </div>
+          <p className="text-sm text-gray-500">{mentee.email}</p>
         </div>
 
         <div className="mt-4 bg-white p-4 rounded-md grid grid-cols-2 md:grid-cols-4 gap-4">
