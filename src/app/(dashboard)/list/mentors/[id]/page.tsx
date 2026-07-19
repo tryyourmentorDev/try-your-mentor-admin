@@ -58,7 +58,7 @@ const MentorDetailPage = async ({
         <div className="bg-white p-4 rounded-md flex gap-4">
           <div className="w-1/3">
             <Image
-              src="/noAvatar.png"
+              src={mentor.profileImageUrl || "/noAvatar.png"}
               alt=""
               width={144}
               height={144}

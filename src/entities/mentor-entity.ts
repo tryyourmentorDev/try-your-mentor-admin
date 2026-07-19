@@ -40,4 +40,11 @@ export interface MentorFormInput {
   company?: string;
   location?: string;
   languages?: string;
+  // Only set when the admin picks a new photo — omitted entirely on submit
+  // otherwise so the BFF leaves the existing profileImageUrl untouched.
+  profileImage?: {
+    fileName: string;
+    mimeType: string;
+    base64: string;
+  };
 }

@@ -46,6 +46,8 @@ function toMentorRequestBody(input: MentorFormInput) {
     company: input.company || undefined,
     location: input.location || undefined,
     languages: input.languages || undefined,
+    // Only included when a new photo was picked — see MentorFormInput.
+    profile_image: input.profileImage || undefined,
   };
 }
 

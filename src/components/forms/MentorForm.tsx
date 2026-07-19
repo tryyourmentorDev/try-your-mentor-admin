@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 import {
   MentorSchema,
   MentorFormValues,
@@ -13,6 +14,17 @@ import { Mentor } from "../../entities/mentor-entity";
 import { JobRole } from "../../entities/job-role-entity";
 import { Qualification } from "../../entities/qualification-entity";
 import InputField from "../InputField";
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 
 const MentorForm = ({
   type,
@@ -29,6 +41,38 @@ const MentorForm = ({
 }) => {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    data?.profileImageUrl ?? null
+  );
+  const [profileImage, setProfileImage] = useState<
+    { fileName: string; mimeType: string; base64: string } | undefined
+  >(undefined);
+
+  const handleImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError(null);
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setImageError("Please choose a JPEG, PNG, or WEBP image");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setImageError("Image must be 5MB or smaller");
+      e.target.value = "";
+      return;
+    }
+
+    const dataUrl = await readFileAsDataUrl(file);
+    setPreviewUrl(dataUrl);
+    setProfileImage({ fileName: file.name, mimeType: file.type, base64: dataUrl });
+  };
 
   const {
     register,
@@ -58,10 +102,12 @@ const MentorForm = ({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
 
+    const payload = { ...values, profileImage };
+
     const response =
       type === "create"
-        ? await createMentorAction(values)
-        : await updateMentorAction(data!.userId, values);
+        ? await createMentorAction(payload)
+        : await updateMentorAction(data!.userId, payload);
 
     if (response.error) {
       setSubmitError(response.message ?? "Something went wrong");
@@ -77,6 +123,28 @@ const MentorForm = ({
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create a new mentor" : "Update the mentor"}
       </h1>
+
+      <span className="text-xs text-gray-400 font-medium">
+        Profile Picture
+      </span>
+      <div className="flex items-center gap-4">
+        <Image
+          src={previewUrl || "/noAvatar.png"}
+          alt=""
+          width={64}
+          height={64}
+          className="w-16 h-16 rounded-full object-cover ring-1 ring-gray-200"
+        />
+        <div className="flex flex-col gap-1">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleImageChange}
+            className="text-sm"
+          />
+          {imageError && <p className="text-xs text-red-400">{imageError}</p>}
+        </div>
+      </div>
 
       <span className="text-xs text-gray-400 font-medium">
         Personal Information
