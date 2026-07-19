@@ -1,40 +1,100 @@
 "use client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MentorSchema } from "../../lib/formValidationSchema";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  MentorSchema,
+  MentorFormValues,
+} from "../../lib/formValidationSchema";
+import { MENTOR_STATUSES, MENTOR_TYPES } from "../../lib/settings";
+import { createMentorAction, updateMentorAction } from "../../actions/mentor";
+import { Mentor } from "../../entities/mentor-entity";
+import { JobRole } from "../../entities/job-role-entity";
+import { Qualification } from "../../entities/qualification-entity";
 import InputField from "../InputField";
 
 const MentorForm = ({
   type,
   data,
+  jobRoles,
+  qualifications,
+  onSuccess,
 }: {
   type: "create" | "update";
-  data?: any;
+  data?: Mentor;
+  jobRoles: JobRole[];
+  qualifications: Qualification[];
+  onSuccess?: () => void;
 }) => {
+  const router = useRouter();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({
+    formState: { errors, isSubmitting },
+  } = useForm<MentorFormValues>({
     resolver: zodResolver(MentorSchema),
+    defaultValues: {
+      userId: data?.userId,
+      firstName: data?.firstName ?? "",
+      lastName: data?.lastName ?? "",
+      email: data?.email ?? "",
+      bio: data?.bio ?? "",
+      status: data?.status ?? "approval_pending",
+      mentorType: data?.mentorType ?? "All",
+      levelOfService: data?.levelOfService ?? "",
+      charge: data?.charge ?? undefined,
+      experienceYears: data?.experienceYears ?? undefined,
+      jobRoleId: data?.jobRoleId ?? undefined,
+      highestQualificationId: data?.highestQualificationId ?? undefined,
+      company: data?.company ?? "",
+      location: data?.location ?? "",
+      languages: data?.languages ?? "",
+    },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    setSubmitError(null);
+
+    const response =
+      type === "create"
+        ? await createMentorAction(values)
+        : await updateMentorAction(data!.userId, values);
+
+    if (response.error) {
+      setSubmitError(response.message ?? "Something went wrong");
+      return;
+    }
+
+    router.refresh();
+    onSuccess?.();
   });
 
   return (
-    <form className="flex flex-col gap-8">
+    <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create a new mentor" : "Update the mentor"}
       </h1>
+
       <span className="text-xs text-gray-400 font-medium">
-        Authentication Information
+        Personal Information
       </span>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Username"
-          name="username"
-          defaultValue={data?.username}
+          label="First Name"
+          name="firstName"
+          defaultValue={data?.firstName}
           register={register}
-          error={errors?.username}
+          error={errors?.firstName}
+        />
+        <InputField
+          label="Last Name"
+          name="lastName"
+          defaultValue={data?.lastName ?? ""}
+          register={register}
+          error={errors?.lastName}
         />
         <InputField
           label="Email"
@@ -44,76 +104,168 @@ const MentorForm = ({
           error={errors?.email}
         />
         <InputField
-          label="Password"
-          name="password"
-          type="password"
-          defaultValue={data?.password}
+          label="Company"
+          name="company"
+          defaultValue={data?.company ?? ""}
           register={register}
-          error={errors?.password}
+          error={errors?.company}
+        />
+        <InputField
+          label="Location"
+          name="location"
+          defaultValue={data?.location ?? ""}
+          register={register}
+          error={errors?.location}
+        />
+        <InputField
+          label="Languages"
+          name="languages"
+          defaultValue={data?.languages ?? ""}
+          register={register}
+          error={errors?.languages}
         />
       </div>
+
       <span className="text-xs text-gray-400 font-medium">
-        Personal Information
+        Mentor Profile
       </span>
       <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="First Name"
-          name="name"
-          defaultValue={data?.name}
-          register={register}
-          error={errors.name}
-        />
-        <InputField
-          label="Last Name"
-          name="surname"
-          defaultValue={data?.surname}
-          register={register}
-          error={errors.surname}
-        />
-        <InputField
-          label="Phone"
-          name="phone"
-          defaultValue={data?.phone}
-          register={register}
-          error={errors.phone}
-        />
-        <InputField
-          label="Address"
-          name="address"
-          defaultValue={data?.address}
-          register={register}
-          error={errors.address}
-        />
-        {data && (
-          <InputField
-            label="Id"
-            name="id"
-            defaultValue={data?.id}
-            register={register}
-            error={errors?.id}
-            hidden
-          />
-        )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Sex</label>
+          <label className="text-xs text-gray-500">Job Role</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("sex")}
-            defaultValue={data?.sex}
+            {...register("jobRoleId")}
+            defaultValue={data?.jobRoleId ?? ""}
           >
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
+            <option value="">Select a job role</option>
+            {jobRoles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
           </select>
-          {errors.sex?.message && (
+          {errors.jobRoleId?.message && (
             <p className="text-xs text-red-400">
-              {errors.sex.message.toString()}
+              {errors.jobRoleId.message.toString()}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-500">
+            Highest Qualification
+          </label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("highestQualificationId")}
+            defaultValue={data?.highestQualificationId ?? ""}
+          >
+            <option value="">Select a qualification</option>
+            {qualifications.map((qualification) => (
+              <option key={qualification.id} value={qualification.id}>
+                {qualification.name}
+              </option>
+            ))}
+          </select>
+          {errors.highestQualificationId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.highestQualificationId.message.toString()}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-500">Status</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("status")}
+            defaultValue={data?.status ?? "approval_pending"}
+          >
+            {MENTOR_STATUSES.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+          {errors.status?.message && (
+            <p className="text-xs text-red-400">
+              {errors.status.message.toString()}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-500">Mentor Type</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("mentorType")}
+            defaultValue={data?.mentorType ?? "All"}
+          >
+            {MENTOR_TYPES.map((mentorType) => (
+              <option key={mentorType.value} value={mentorType.value}>
+                {mentorType.label}
+              </option>
+            ))}
+          </select>
+          {errors.mentorType?.message && (
+            <p className="text-xs text-red-400">
+              {errors.mentorType.message.toString()}
+            </p>
+          )}
+        </div>
+
+        <InputField
+          label="Level of Service"
+          name="levelOfService"
+          defaultValue={data?.levelOfService ?? ""}
+          register={register}
+          error={errors?.levelOfService}
+        />
+        <InputField
+          label="Charge"
+          name="charge"
+          type="number"
+          defaultValue={data?.charge != null ? String(data.charge) : ""}
+          register={register}
+          error={errors?.charge}
+          inputProps={{ step: "0.01", min: 0 }}
+        />
+        <InputField
+          label="Experience (years)"
+          name="experienceYears"
+          type="number"
+          defaultValue={
+            data?.experienceYears != null ? String(data.experienceYears) : ""
+          }
+          register={register}
+          error={errors?.experienceYears}
+          inputProps={{ min: 0 }}
+        />
+
+        <div className="flex flex-col gap-2 w-full">
+          <label className="text-xs text-gray-500">Bio</label>
+          <textarea
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            rows={3}
+            {...register("bio")}
+            defaultValue={data?.bio ?? ""}
+          />
+          {errors.bio?.message && (
+            <p className="text-xs text-red-400">
+              {errors.bio.message.toString()}
             </p>
           )}
         </div>
       </div>
 
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
+      {submitError && <p className="text-sm text-red-500">{submitError}</p>}
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="bg-blue-400 text-white p-2 rounded-md disabled:opacity-60"
+      >
+        {isSubmitting ? "Saving..." : type === "create" ? "Create" : "Update"}
       </button>
     </form>
   );

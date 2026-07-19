@@ -9,6 +9,15 @@ export const MENTOR_STATUSES = [
 
 export type MentorStatus = (typeof MENTOR_STATUSES)[number]["value"];
 
+// Mirrors the mentor_type_enum enum in the database (mentors.mentor_type).
+export const MENTOR_TYPES = [
+  { value: "Professional", label: "Professional" },
+  { value: "Career Guidance", label: "Career Guidance" },
+  { value: "All", label: "All" },
+] as const;
+
+export type MentorType = (typeof MENTOR_TYPES)[number]["value"];
+
 type RouteAccessMap = {
   [key: string]: string[];
 };

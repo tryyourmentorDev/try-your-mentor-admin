@@ -7,6 +7,8 @@ import StatusFilter from "@/components/StatusFilter";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import { getMentorListAction } from "@/actions/mentor";
+import { getJobRoleListAction } from "@/actions/jobRole";
+import { getQualificationListAction } from "@/actions/qualification";
 import { Mentor } from "@/entities/mentor-entity";
 import { role } from "@/lib/data";
 import Image from "next/image";
@@ -126,6 +128,13 @@ const MentorListPage = async ({
 }) => {
   const { search, status } = await searchParams;
 
+  const [jobRolesResponse, qualificationsResponse] = await Promise.all([
+    getJobRoleListAction(),
+    getQualificationListAction(),
+  ]);
+  const jobRoles = jobRolesResponse.data ?? [];
+  const qualifications = qualificationsResponse.data ?? [];
+
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
@@ -138,7 +147,14 @@ const MentorListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModel table="mentor" type="create" />}
+            {role === "admin" && (
+              <FormModel
+                table="mentor"
+                type="create"
+                jobRoles={jobRoles}
+                qualifications={qualifications}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -1,18 +1,27 @@
 "use client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MentorForm from "./forms/MentorForm";
+import { deleteMentorAction } from "../actions/mentor";
+import { Mentor } from "../entities/mentor-entity";
+import { JobRole } from "../entities/job-role-entity";
+import { Qualification } from "../entities/qualification-entity";
 
 const FormModel = ({
   table,
   type,
   data,
   id,
+  jobRoles = [],
+  qualifications = [],
 }: {
-  table: any;
-  type: any;
-  data?: any;
-  id?: any;
+  table: "mentor" | "mentee";
+  type: "create" | "update" | "delete";
+  data?: Mentor;
+  id?: number | string;
+  jobRoles?: JobRole[];
+  qualifications?: Qualification[];
 }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -22,21 +31,67 @@ const FormModel = ({
       ? "bg-lamaSky"
       : "bg-lamaPurple";
 
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const Form = () => {
-    return type === "delete" && id ? (
-      <form action="" className="p-4 flex flex-col gap-4">
-        <span className="text-center font-medium">
-          All data will be lost. Do you want to delete this {table}?
-        </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Delete
-        </button>
-      </form>
-    ) : (
-      <MentorForm type="create" />
-    );
+  const handleDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || table !== "mentor") return;
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    const response = await deleteMentorAction(Number(id));
+
+    if (response.error) {
+      setDeleteError(response.message ?? "Something went wrong");
+      setDeleting(false);
+      return;
+    }
+
+    router.refresh();
+    setOpen(false);
+    setDeleting(false);
+  };
+
+  const renderForm = () => {
+    if (type === "delete" && id) {
+      return (
+        <form onSubmit={handleDelete} className="p-4 flex flex-col gap-4">
+          <span className="text-center font-medium">
+            This will mark the {table} as inactive. Their history (bookings,
+            sessions, reviews) is kept — this does not permanently delete
+            data. Continue?
+          </span>
+          {deleteError && (
+            <p className="text-sm text-red-500 text-center">{deleteError}</p>
+          )}
+          <button
+            type="submit"
+            disabled={deleting}
+            className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center disabled:opacity-60"
+          >
+            {deleting ? "Deactivating..." : "Deactivate"}
+          </button>
+        </form>
+      );
+    }
+
+    if (table === "mentor" && (type === "create" || type === "update")) {
+      return (
+        <MentorForm
+          type={type}
+          data={data}
+          jobRoles={jobRoles}
+          qualifications={qualifications}
+          onSuccess={() => setOpen(false)}
+        />
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -49,8 +104,8 @@ const FormModel = ({
       </button>
       {open && (
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]">
-            <Form />
+          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[90vh] overflow-y-auto">
+            {renderForm()}
             <div
               className="absolute top-4 right-4 cursor-pointer"
               onClick={() => setOpen(false)}

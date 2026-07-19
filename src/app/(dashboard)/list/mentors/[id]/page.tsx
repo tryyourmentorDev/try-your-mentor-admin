@@ -1,5 +1,9 @@
 import { getMentorAction } from "@/actions/mentor";
+import { getJobRoleListAction } from "@/actions/jobRole";
+import { getQualificationListAction } from "@/actions/qualification";
+import FormModel from "@/components/FromModel";
 import MentorStatusBadge from "@/components/MentorStatusBadge";
+import { role } from "@/lib/data";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
@@ -9,7 +13,12 @@ const MentorDetailPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const { id } = await params;
-  const response = await getMentorAction(id);
+  const [response, jobRolesResponse, qualificationsResponse] =
+    await Promise.all([
+      getMentorAction(id),
+      getJobRoleListAction(),
+      getQualificationListAction(),
+    ]);
 
   if (response.error) {
     if (response.message === "Mentor not found") {
@@ -25,6 +34,8 @@ const MentorDetailPage = async ({
   }
 
   const mentor = response.data!;
+  const jobRoles = jobRolesResponse.data ?? [];
+  const qualifications = qualificationsResponse.data ?? [];
   const fullName =
     [mentor.firstName, mentor.lastName].filter(Boolean).join(" ") || "—";
 
@@ -42,7 +53,19 @@ const MentorDetailPage = async ({
             />
           </div>
           <div className="w-2/3 flex flex-col gap-4 justify-between">
-            <h1 className="text-xl font-semibold">{fullName}</h1>
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-xl font-semibold">{fullName}</h1>
+              {role === "admin" && (
+                <FormModel
+                  table="mentor"
+                  type="update"
+                  data={mentor}
+                  id={mentor.userId}
+                  jobRoles={jobRoles}
+                  qualifications={qualifications}
+                />
+              )}
+            </div>
             <p className="text-sm text-gray-500">{mentor.bio ?? "—"}</p>
             <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
               <span className="w-full md:w-1/2 lg:w-full 2xl:w-1/2">
@@ -98,6 +121,24 @@ const MentorDetailPage = async ({
             <span className="text-xs text-gray-400">Mentor Type</span>
             <span className="text-sm font-medium">
               {mentor.mentorType ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Company</span>
+            <span className="text-sm font-medium">
+              {mentor.company ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Location</span>
+            <span className="text-sm font-medium">
+              {mentor.location ?? "—"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Languages</span>
+            <span className="text-sm font-medium">
+              {mentor.languages ?? "—"}
             </span>
           </div>
           <div className="flex flex-col gap-1">
