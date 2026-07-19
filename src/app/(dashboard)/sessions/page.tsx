@@ -1,151 +1,407 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import BigCalendar from "@/components/BigCalender";
-import { mentorData, calendarEvents } from "@/lib/data";
+import React, { useEffect, useMemo, useState } from "react";
+import BigCalendar, { CalendarEvent } from "@/components/BigCalender";
+import { getMentorListAction } from "@/actions/mentor";
+import { getAvailabilitySlotsAction } from "@/actions/availabilitySlot";
+import {
+  getBookingListAction,
+  createBookingAction,
+  updateBookingAction,
+  cancelBookingAction,
+} from "@/actions/booking";
+import { Mentor } from "@/entities/mentor-entity";
+import { Booking } from "@/entities/booking-entity";
+import { AvailabilitySlot } from "@/entities/availability-slot-entity";
+
+// India-based product: render all times in IST regardless of the viewer.
+const IST = "Asia/Kolkata";
+
+const slotLabel = (slot: AvailabilitySlot) => {
+  const start = new Date(slot.startTime);
+  const end = new Date(slot.endTime);
+  const d = start.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    timeZone: IST,
+  });
+  const t = (dt: Date) =>
+    dt.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: IST,
+    });
+  return `${d}, ${t(start)} – ${t(end)} IST`;
+};
 
 const SessionManagerPage = () => {
-  const [mentor, setMentor] = useState("");
-  const [mentee, setMentee] = useState("");
-  const [sessionDateTime, setSessionDateTime] = useState("");
-  const [isFormValid, setIsFormValid] = useState(false);
-  const [formMode, setFormMode] = useState("create");
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    setIsFormValid(mentor !== "" && mentee !== "" && sessionDateTime !== "");
-  }, [mentor, mentee, sessionDateTime]);
+  // Create-form state
+  const [mentorId, setMentorId] = useState<number | "">("");
+  const [freeSlots, setFreeSlots] = useState<AvailabilitySlot[]>([]);
+  const [slotId, setSlotId] = useState<number | "">("");
+  const [menteeEmail, setMenteeEmail] = useState("");
+  const [menteeFirstName, setMenteeFirstName] = useState("");
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    if (formMode === "create") {
-      const newEvent = {
-        id: calendarEvents.length + 1,
-        title: `${mentee}_${mentor}_Session`,
-        allDay: false,
-        start: new Date(sessionDateTime),
-        end: new Date(new Date(sessionDateTime).getTime() + 60 * 60 * 1000),
-      };
-      calendarEvents.push(newEvent);
-      alert("Session created successfully!");
-    } else if (formMode === "update" && selectedEvent) {
-      const eventIndex = calendarEvents.findIndex(
-        (event) => event.id === selectedEvent.id
-      );
-      if (eventIndex > -1) {
-        calendarEvents[eventIndex] = {
-          ...calendarEvents[eventIndex],
-          title: `${mentee}_${mentor}_Session`,
-          start: new Date(sessionDateTime),
-          end: new Date(new Date(sessionDateTime).getTime() + 60 * 60 * 1000),
-        };
-        alert("Session updated successfully!");
-      }
-    }
-    resetForm();
+  // Selected booking (for the update panel)
+  const [selected, setSelected] = useState<Booking | null>(null);
+  const [rescheduleSlotId, setRescheduleSlotId] = useState<number | "">("");
+
+  const flash = (m: string) => {
+    setMessage(m);
+    setError(null);
+  };
+  const fail = (m: string) => {
+    setError(m);
+    setMessage(null);
   };
 
-  const resetForm = () => {
-    setMentor("");
-    setMentee("");
-    setSessionDateTime("");
-    setFormMode("create");
-    setSelectedEvent(null);
+  const loadBookings = async () => {
+    const res = await getBookingListAction();
+    if (res.error) return fail(res.message ?? "Failed to load bookings");
+    setBookings(res.data ?? []);
+  };
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const [mentorRes, bookingRes] = await Promise.all([
+        getMentorListAction(),
+        getBookingListAction(),
+      ]);
+      if (mentorRes.error) fail(mentorRes.message ?? "Failed to load mentors");
+      else setMentors(mentorRes.data ?? []);
+      if (bookingRes.error)
+        fail(bookingRes.message ?? "Failed to load bookings");
+      else setBookings(bookingRes.data ?? []);
+      setLoading(false);
+    })();
+  }, []);
+
+  // Load the chosen mentor's free slots for the create form.
+  useEffect(() => {
+    if (mentorId === "") {
+      setFreeSlots([]);
+      setSlotId("");
+      return;
+    }
+    (async () => {
+      const res = await getAvailabilitySlotsAction(Number(mentorId));
+      if (!res.error && res.data) {
+        setFreeSlots(res.data.filter((s) => s.state === "free"));
+      }
+    })();
+  }, [mentorId]);
+
+  const calendarEvents: CalendarEvent[] = useMemo(
+    () =>
+      bookings
+        .filter((b) => b.status !== "cancelled")
+        .map((b) => ({
+          id: b.id,
+          title: `${b.menteeName || b.menteeEmail || "Mentee"} · ${
+            b.mentorName || "Mentor"
+          }`,
+          start: new Date(b.startTime),
+          end: new Date(b.endTime),
+          resource: b,
+        })),
+    [bookings]
+  );
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mentorId === "" || slotId === "" || !menteeEmail.trim()) {
+      fail("Mentor, slot, and mentee email are required.");
+      return;
+    }
+    setBusy(true);
+    const res = await createBookingAction({
+      mentorId: Number(mentorId),
+      slotId: Number(slotId),
+      menteeEmail: menteeEmail.trim(),
+      menteeFirstName: menteeFirstName.trim() || undefined,
+      title: title.trim() || undefined,
+      notes: notes.trim() || undefined,
+    });
+    setBusy(false);
+    if (res.error) return fail(res.message ?? "Failed to create booking");
+    flash("Session booked.");
+    setSlotId("");
+    setMenteeEmail("");
+    setMenteeFirstName("");
+    setTitle("");
+    setNotes("");
+    await loadBookings();
+    // Refresh free slots (the one we just booked is now taken).
+    const slotsRes = await getAvailabilitySlotsAction(Number(mentorId));
+    if (!slotsRes.error && slotsRes.data)
+      setFreeSlots(slotsRes.data.filter((s) => s.state === "free"));
   };
 
   const handleSelectEvent = (event: any) => {
-    if (event && event.title) {
-      setSelectedEvent(event);
-      setMentor(event.title.split("_")[1]);
-      setMentee(event.title.split("_")[0]);
-      setSessionDateTime(new Date(event.start).toISOString().slice(0, 16));
-      setFormMode("update");
-    }
+    setSelected(event.resource as Booking);
+    setRescheduleSlotId("");
+    setMessage(null);
+    setError(null);
   };
 
-  const handleSelectSlot = (slotInfo: any) => {
-    resetForm();
+  const changeStatus = async (status: "completed" | "cancelled") => {
+    if (!selected) return;
+    setBusy(true);
+    const res =
+      status === "cancelled"
+        ? await cancelBookingAction(selected.id)
+        : await updateBookingAction(selected.id, { status });
+    setBusy(false);
+    if (res.error) return fail(res.message ?? "Failed to update booking");
+    flash(status === "cancelled" ? "Booking cancelled." : "Marked completed.");
+    setSelected(null);
+    await loadBookings();
   };
+
+  const reschedule = async () => {
+    if (!selected || rescheduleSlotId === "") return;
+    setBusy(true);
+    const res = await updateBookingAction(selected.id, {
+      slotId: Number(rescheduleSlotId),
+    });
+    setBusy(false);
+    if (res.error) return fail(res.message ?? "Failed to reschedule");
+    flash("Booking rescheduled.");
+    setSelected(null);
+    await loadBookings();
+  };
+
+  // Free slots for the selected booking's mentor (for rescheduling).
+  const [rescheduleSlots, setRescheduleSlots] = useState<AvailabilitySlot[]>([]);
+  useEffect(() => {
+    if (!selected) {
+      setRescheduleSlots([]);
+      return;
+    }
+    (async () => {
+      const res = await getAvailabilitySlotsAction(selected.mentorId);
+      if (!res.error && res.data)
+        setRescheduleSlots(res.data.filter((s) => s.state === "free"));
+    })();
+  }, [selected]);
 
   return (
     <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT */}
+      {/* LEFT: calendar */}
       <div className="w-full xl:w-2/3">
         <div className="h-full bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Schedule</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold">Sessions</h1>
+            {loading && (
+              <span className="text-xs text-gray-400">Loading…</span>
+            )}
+          </div>
           <BigCalendar
+            events={calendarEvents}
             onSelectEvent={handleSelectEvent}
-            onSelectSlot={handleSelectSlot}
+            onSelectSlot={() => setSelected(null)}
           />
         </div>
       </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        <h2 className="text-xl font-semibold">
-          {formMode === "create" ? "Create Session" : "Update Session"}
-        </h2>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="mentor"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Mentor Name
-            </label>
-            <select
-              id="mentor"
-              name="mentor"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              value={mentor}
-              onChange={(e) => setMentor(e.target.value)}
-            >
-              <option value="">Select a mentor</option>
-              {mentorData.map((mentor) => (
-                <option key={mentor.id} value={mentor.name}>
-                  {mentor.name}
-                </option>
-              ))}
-            </select>
+
+      {/* RIGHT: create / manage */}
+      <div className="w-full xl:w-1/3 flex flex-col gap-6">
+        {message && <p className="text-sm text-green-600">{message}</p>}
+        {error && <p className="text-sm text-red-500">{error}</p>}
+
+        {selected ? (
+          <div className="bg-white p-4 rounded-md flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Manage session</h2>
+              <button
+                onClick={() => setSelected(null)}
+                className="text-xs text-gray-400"
+              >
+                Close
+              </button>
+            </div>
+            <div className="text-sm flex flex-col gap-1">
+              <p>
+                <span className="text-gray-400">Mentee: </span>
+                {selected.menteeName || selected.menteeEmail}
+              </p>
+              <p>
+                <span className="text-gray-400">Mentor: </span>
+                {selected.mentorName ?? "—"}
+              </p>
+              <p>
+                <span className="text-gray-400">When: </span>
+                {new Date(selected.startTime).toLocaleString(undefined, {
+                  timeZone: IST,
+                })}{" "}
+                IST
+              </p>
+              <p>
+                <span className="text-gray-400">Status: </span>
+                {selected.status}
+              </p>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => changeStatus("completed")}
+                disabled={busy || selected.status !== "reserved"}
+                className="text-sm px-3 py-2 rounded-md bg-green-100 text-green-700 disabled:opacity-40"
+              >
+                Mark completed
+              </button>
+              <button
+                onClick={() => changeStatus("cancelled")}
+                disabled={busy || selected.status === "cancelled"}
+                className="text-sm px-3 py-2 rounded-md bg-red-100 text-red-700 disabled:opacity-40"
+              >
+                Cancel booking
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+              <label className="text-xs text-gray-500">
+                Reschedule to another free slot
+              </label>
+              <select
+                className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                value={rescheduleSlotId}
+                onChange={(e) =>
+                  setRescheduleSlotId(
+                    e.target.value === "" ? "" : Number(e.target.value)
+                  )
+                }
+              >
+                <option value="">Select a slot</option>
+                {rescheduleSlots.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {slotLabel(s)}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={reschedule}
+                disabled={busy || rescheduleSlotId === ""}
+                className="self-start text-sm px-3 py-2 rounded-md bg-lamaSky disabled:opacity-40"
+              >
+                Reschedule
+              </button>
+            </div>
           </div>
-          <div>
-            <label
-              htmlFor="mentee"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Mentee Name
-            </label>
-            <input
-              type="text"
-              id="mentee"
-              name="mentee"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              value={mentee}
-              onChange={(e) => setMentee(e.target.value)}
-            />
+        ) : (
+          <div className="bg-white p-4 rounded-md flex flex-col gap-4">
+            <h2 className="text-lg font-semibold">Book a session</h2>
+            <form className="flex flex-col gap-4" onSubmit={handleCreate}>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Mentor</label>
+                <select
+                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                  value={mentorId}
+                  onChange={(e) =>
+                    setMentorId(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                >
+                  <option value="">Select a mentor</option>
+                  {mentors.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {[m.firstName, m.lastName].filter(Boolean).join(" ") ||
+                        m.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">
+                  Free slot{" "}
+                  {mentorId !== "" && freeSlots.length === 0 && (
+                    <span className="text-red-400">
+                      (no free slots for this mentor)
+                    </span>
+                  )}
+                </label>
+                <select
+                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                  value={slotId}
+                  disabled={mentorId === ""}
+                  onChange={(e) =>
+                    setSlotId(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                >
+                  <option value="">Select a slot</option>
+                  {freeSlots.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {slotLabel(s)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Mentee email</label>
+                <input
+                  type="email"
+                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                  value={menteeEmail}
+                  onChange={(e) => setMenteeEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">
+                  Mentee name (optional)
+                </label>
+                <input
+                  type="text"
+                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                  value={menteeFirstName}
+                  onChange={(e) => setMenteeFirstName(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Title (optional)</label>
+                <input
+                  type="text"
+                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Notes (optional)</label>
+                <textarea
+                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="bg-blue-400 text-white p-2 rounded-md disabled:opacity-60"
+              >
+                {busy ? "Booking…" : "Book session"}
+              </button>
+            </form>
           </div>
-          <div>
-            <label
-              htmlFor="sessionDateTime"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Session Date and Time
-            </label>
-            <input
-              type="datetime-local"
-              id="sessionDateTime"
-              name="sessionDateTime"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              value={sessionDateTime}
-              onChange={(e) => setSessionDateTime(e.target.value)}
-            />
-          </div>
-          <button
-            type="submit"
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            disabled={!isFormValid}
-          >
-            {formMode === "create" ? "Create Session" : "Update Session"}
-          </button>
-        </form>
+        )}
       </div>
     </div>
   );

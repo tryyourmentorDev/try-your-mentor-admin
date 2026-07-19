@@ -1,19 +1,32 @@
 "use client";
 
 import { Calendar, momentLocalizer, View, Views } from "react-big-calendar";
-import moment from "moment";
+import moment from "moment-timezone";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { calendarEvents } from "@/lib/data";
 import { useState } from "react";
+
+// India-based product: pin the calendar grid to IST so events render at their
+// IST wall-clock time regardless of the admin's machine timezone.
+moment.tz.setDefault("Asia/Kolkata");
 
 const localizer = momentLocalizer(moment);
 
+export interface CalendarEvent {
+  id: number;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay?: boolean;
+  resource?: any;
+}
+
 interface BigCalendarProps {
+  events: CalendarEvent[];
   onSelectEvent: (event: any) => void;
   onSelectSlot: (slotInfo: any) => void;
 }
 
-const BigCalendar = ({ onSelectEvent, onSelectSlot }: BigCalendarProps) => {
+const BigCalendar = ({ events, onSelectEvent, onSelectSlot }: BigCalendarProps) => {
   const [view, setView] = useState<View>(Views.MONTH);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -77,7 +90,7 @@ const BigCalendar = ({ onSelectEvent, onSelectSlot }: BigCalendarProps) => {
       )}
       <Calendar
         localizer={localizer}
-        events={calendarEvents}
+        events={events}
         startAccessor="start"
         endAccessor="end"
         style={{ height: "100%" }}

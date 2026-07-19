@@ -1,6 +1,9 @@
 import { getMentorAction } from "@/actions/mentor";
 import { getJobRoleListAction } from "@/actions/jobRole";
 import { getQualificationListAction } from "@/actions/qualification";
+import { getWeeklyScheduleAction } from "@/actions/weeklySchedule";
+import { getAvailabilitySlotsAction } from "@/actions/availabilitySlot";
+import AvailabilityManager from "@/components/AvailabilityManager";
 import FormModel from "@/components/FromModel";
 import MentorStatusBadge from "@/components/MentorStatusBadge";
 import { role } from "@/lib/data";
@@ -13,12 +16,20 @@ const MentorDetailPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const { id } = await params;
-  const [response, jobRolesResponse, qualificationsResponse] =
-    await Promise.all([
-      getMentorAction(id),
-      getJobRoleListAction(),
-      getQualificationListAction(),
-    ]);
+  const mentorId = Number(id);
+  const [
+    response,
+    jobRolesResponse,
+    qualificationsResponse,
+    weeklyResponse,
+    slotsResponse,
+  ] = await Promise.all([
+    getMentorAction(id),
+    getJobRoleListAction(),
+    getQualificationListAction(),
+    getWeeklyScheduleAction(mentorId),
+    getAvailabilitySlotsAction(mentorId),
+  ]);
 
   if (response.error) {
     if (response.message === "Mentor not found") {
@@ -36,6 +47,8 @@ const MentorDetailPage = async ({
   const mentor = response.data!;
   const jobRoles = jobRolesResponse.data ?? [];
   const qualifications = qualificationsResponse.data ?? [];
+  const weeklySchedule = weeklyResponse.data ?? [];
+  const availabilitySlots = slotsResponse.data ?? [];
   const fullName =
     [mentor.firstName, mentor.lastName].filter(Boolean).join(" ") || "—";
 
@@ -148,6 +161,14 @@ const MentorDetailPage = async ({
             </span>
           </div>
         </div>
+
+        {role === "admin" && (
+          <AvailabilityManager
+            mentorId={mentor.userId}
+            initialWeekly={weeklySchedule}
+            initialSlots={availabilitySlots}
+          />
+        )}
       </div>
     </div>
   );
