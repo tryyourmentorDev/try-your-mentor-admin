@@ -18,6 +18,12 @@ function mapMentee(mentee: any): Mentee {
     expectedJobRole: mentee.expected_job_role,
     experienceYears: mentee.experience_years,
     createdAt: mentee.created_at,
+    resumes: mentee.resumes?.map((resume: any) => ({
+      id: resume.id,
+      fileUrl: resume.file_url,
+      fileName: resume.file_name,
+      createdAt: resume.created_at,
+    })),
   };
 }
 

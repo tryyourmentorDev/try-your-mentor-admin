@@ -105,6 +105,42 @@ const MenteeDetailPage = async ({
             </span>
           </div>
         </div>
+
+        <div className="mt-4 bg-white p-4 rounded-md">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">
+            CV / Resume
+          </h2>
+          {mentee.resumes && mentee.resumes.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {mentee.resumes.map((resume) => (
+                <li
+                  key={resume.id}
+                  className="flex items-center justify-between gap-4 text-sm"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {resume.fileName ?? "Resume"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      Uploaded {new Date(resume.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <a
+                    href={resume.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="text-blue-500 hover:underline shrink-0"
+                  >
+                    Download
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-400">No CV uploaded yet.</p>
+          )}
+        </div>
       </div>
     </div>
   );

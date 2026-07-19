@@ -1,3 +1,10 @@
+export interface MenteeResume {
+  id: number;
+  fileUrl: string;
+  fileName: string | null;
+  createdAt: string;
+}
+
 export interface Mentee {
   userId: number;
   email: string;
@@ -11,6 +18,8 @@ export interface Mentee {
   expectedJobRole: string | null;
   experienceYears: number | null;
   createdAt: string;
+  // Only populated by getMenteeAction (the detail view) — undefined in list responses.
+  resumes?: MenteeResume[];
 }
 
 // Fields the create/update mentee form submits. IDs (job role, qualification)
