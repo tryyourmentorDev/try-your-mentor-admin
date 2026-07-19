@@ -9,7 +9,10 @@ import {
   deleteAvailabilitySlotAction,
 } from "@/actions/availabilitySlot";
 import { replaceWeeklyScheduleAction } from "@/actions/weeklySchedule";
-import { AvailabilitySlot, SlotState } from "@/entities/availability-slot-entity";
+import {
+  AvailabilitySlot,
+  SlotState,
+} from "@/entities/availability-slot-entity";
 import { WeeklyScheduleRow } from "@/entities/weekly-schedule-entity";
 
 const WEEKDAYS = [
@@ -67,7 +70,7 @@ const formatTimeRange = (start: string, end: string) => {
     timeZone: IST,
   };
   return `${new Date(start).toLocaleTimeString(undefined, opts)} – ${new Date(
-    end
+    end,
   ).toLocaleTimeString(undefined, opts)}`;
 };
 
@@ -80,8 +83,9 @@ const AvailabilityManager = ({
   initialWeekly: WeeklyScheduleRow[];
   initialSlots: AvailabilitySlot[];
 }) => {
+  console.log("AvailabilityManager initialWeekly", initialWeekly);
   const [weekly, setWeekly] = useState<WeeklyRowState[]>(
-    buildWeeklyState(initialWeekly)
+    buildWeeklyState(initialWeekly),
   );
   const [timezone, setTimezone] = useState(initialWeekly[0]?.timezone ?? IST);
   const [slots, setSlots] = useState<AvailabilitySlot[]>(initialSlots);
@@ -116,7 +120,7 @@ const AvailabilityManager = ({
 
   const updateWeeklyRow = (weekday: number, patch: Partial<WeeklyRowState>) => {
     setWeekly((prev) =>
-      prev.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r))
+      prev.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r)),
     );
   };
 
@@ -140,7 +144,8 @@ const AvailabilityManager = ({
 
     startTransition(async () => {
       const res = await replaceWeeklyScheduleAction(mentorId, rows);
-      if (res.error) return fail(res.message ?? "Failed to save weekly template");
+      if (res.error)
+        return fail(res.message ?? "Failed to save weekly template");
       flash("Weekly template saved.");
     });
   };
@@ -157,7 +162,7 @@ const AvailabilityManager = ({
       flash(
         `Generated ${res.data?.created ?? 0} slot(s); skipped ${
           res.data?.skipped ?? 0
-        } overlapping/past.`
+        } overlapping/past.`,
       );
     });
   };
@@ -187,7 +192,7 @@ const AvailabilityManager = ({
       const res = await toggleAvailabilitySlotAction(
         mentorId,
         slot.id,
-        !slot.isActive
+        !slot.isActive,
       );
       if (res.error) return fail(res.message ?? "Failed to toggle slot");
       await refreshSlots();
@@ -238,7 +243,10 @@ const AvailabilityManager = ({
         </div>
         <div className="flex flex-col gap-2">
           {weekly.map((row) => (
-            <div key={row.weekday} className="flex items-center gap-3 flex-wrap">
+            <div
+              key={row.weekday}
+              className="flex items-center gap-3 flex-wrap"
+            >
               <label className="flex items-center gap-2 w-32">
                 <input
                   type="checkbox"
@@ -247,9 +255,7 @@ const AvailabilityManager = ({
                     updateWeeklyRow(row.weekday, { enabled: e.target.checked })
                   }
                 />
-                <span className="text-sm">
-                  {WEEKDAYS[row.weekday].label}
-                </span>
+                <span className="text-sm">{WEEKDAYS[row.weekday].label}</span>
               </label>
               <input
                 type="time"
@@ -331,7 +337,9 @@ const AvailabilityManager = ({
 
       {/* Manual add */}
       <section className="flex flex-col gap-3 border-t border-gray-100 pt-4">
-        <span className="text-xs text-gray-400 font-medium">Add a single slot</span>
+        <span className="text-xs text-gray-400 font-medium">
+          Add a single slot
+        </span>
         <div className="flex items-end gap-3 flex-wrap">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500">Date</label>
