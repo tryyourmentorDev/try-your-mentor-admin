@@ -6,6 +6,7 @@ import { getAvailabilitySlotsAction } from "@/actions/availabilitySlot";
 import AvailabilityManager from "@/components/AvailabilityManager";
 import FormModel from "@/components/FromModel";
 import MentorStatusBadge from "@/components/MentorStatusBadge";
+import MentorStatusToggle from "@/components/MentorStatusToggle";
 import { role } from "@/lib/data";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -53,8 +54,8 @@ const MentorDetailPage = async ({
     [mentor.firstName, mentor.lastName].filter(Boolean).join(" ") || "—";
 
   return (
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      <div className="w-full xl:w-2/3">
+    <div className="flex-1 p-4 flex gap-4 flex-col">
+      <div className="w-full">
         <div className="bg-white p-4 rounded-md flex gap-4">
           <div className="w-1/3">
             <Image
@@ -86,6 +87,13 @@ const MentorDetailPage = async ({
               </span>
               <span className="w-full md:w-1/2 lg:w-full 2xl:w-1/2 flex items-center gap-2">
                 Status: <MentorStatusBadge status={mentor.status} />
+                {role === "admin" && (
+                  <MentorStatusToggle
+                    mentorId={mentor.userId}
+                    status={mentor.status}
+                    hasAvailabilitySlots={availabilitySlots.length > 0}
+                  />
+                )}
               </span>
             </div>
           </div>

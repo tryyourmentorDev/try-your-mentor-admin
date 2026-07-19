@@ -38,8 +38,8 @@ const MenteeDetailPage = async ({
     [mentee.firstName, mentee.lastName].filter(Boolean).join(" ") || "—";
 
   return (
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      <div className="w-full xl:w-2/3">
+    <div className="flex-1 p-4 flex gap-4 flex-col">
+      <div className="w-full">
         <div className="bg-white p-4 rounded-md flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-xl font-semibold">{fullName}</h1>

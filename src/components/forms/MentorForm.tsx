@@ -8,7 +8,7 @@ import {
   MentorSchema,
   MentorFormValues,
 } from "../../lib/formValidationSchema";
-import { MENTOR_STATUSES, MENTOR_TYPES } from "../../lib/settings";
+import { MENTOR_TYPES } from "../../lib/settings";
 import { createMentorAction, updateMentorAction } from "../../actions/mentor";
 import { Mentor } from "../../entities/mentor-entity";
 import { JobRole } from "../../entities/job-role-entity";
@@ -86,7 +86,6 @@ const MentorForm = ({
       lastName: data?.lastName ?? "",
       email: data?.email ?? "",
       bio: data?.bio ?? "",
-      status: data?.status ?? "approval_pending",
       mentorType: data?.mentorType ?? "All",
       levelOfService: data?.levelOfService ?? "",
       charge: data?.charge ?? undefined,
@@ -123,6 +122,12 @@ const MentorForm = ({
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create a new mentor" : "Update the mentor"}
       </h1>
+      {type === "create" && (
+        <p className="text-xs text-gray-400 -mt-6">
+          New mentors start out as &ldquo;Approval Pending&rdquo;. Activate them
+          from the mentor profile page once their available time slots are set up.
+        </p>
+      )}
 
       <span className="text-xs text-gray-400 font-medium">
         Profile Picture
@@ -238,26 +243,6 @@ const MentorForm = ({
           {errors.highestQualificationId?.message && (
             <p className="text-xs text-red-400">
               {errors.highestQualificationId.message.toString()}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Status</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("status")}
-            defaultValue={data?.status ?? "approval_pending"}
-          >
-            {MENTOR_STATUSES.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
-          {errors.status?.message && (
-            <p className="text-xs text-red-400">
-              {errors.status.message.toString()}
             </p>
           )}
         </div>

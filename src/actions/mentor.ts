@@ -132,6 +132,29 @@ export async function updateMentorAction(
   };
 }
 
+// Explicit status toggle from the mentor profile view (Active/Inactive only —
+// 'approval_pending' is create-time-only). The BFF rejects switching to
+// 'active' if the mentor has no availability slots on file.
+export async function updateMentorStatusAction(
+  userId: number,
+  status: "active" | "inactive"
+): Promise<APIResponse<{ user_id: number; status: string }>> {
+  const response = await http({
+    url: `/mentors/${userId}/status`,
+    method: "PATCH",
+    body: { status },
+  });
+
+  if (response.error) {
+    return response;
+  }
+
+  return {
+    error: false,
+    data: response.data,
+  };
+}
+
 // Soft delete: the BFF sets status -> 'inactive' rather than removing the
 // mentor's row, so historical bookings/reviews/sessions stay intact.
 export async function deleteMentorAction(
