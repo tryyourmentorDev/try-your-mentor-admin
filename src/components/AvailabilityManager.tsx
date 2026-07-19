@@ -83,7 +83,6 @@ const AvailabilityManager = ({
   initialWeekly: WeeklyScheduleRow[];
   initialSlots: AvailabilitySlot[];
 }) => {
-  console.log("AvailabilityManager initialWeekly", initialWeekly);
   const [weekly, setWeekly] = useState<WeeklyRowState[]>(
     buildWeeklyState(initialWeekly),
   );
