@@ -1,6 +1,7 @@
 export type BookingStatus = "reserved" | "completed" | "cancelled";
 
-// A booking = a session: a mentee booked into one of a mentor's slots.
+// A booking is the mentee's raw reservation. Each has one linked session
+// (session_status + contacted) that the admin manages separately.
 export interface Booking {
   id: number;
   mentorId: number;
@@ -15,6 +16,9 @@ export interface Booking {
   mentorName: string | null;
   menteeName: string | null;
   menteeEmail: string | null;
+  sessionId: number | null;
+  sessionStatus: string | null;
+  contacted: boolean | null;
 }
 
 export interface CreateBookingInput {

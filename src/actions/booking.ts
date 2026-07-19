@@ -23,6 +23,9 @@ function mapBooking(b: any): Booking {
     mentorName: b.mentor_name ?? null,
     menteeName: b.mentee_name ?? null,
     menteeEmail: b.mentee_email ?? null,
+    sessionId: b.session_id ?? null,
+    sessionStatus: b.session_status ?? null,
+    contacted: b.contacted ?? null,
   };
 }
 

@@ -30,6 +30,12 @@ const menuItems = [
         visible: ["admin"],
       },
       {
+        icon: "/calendar.png",
+        label: "Bookings",
+        href: "/list/bookings",
+        visible: ["admin"],
+      },
+      {
         icon: "/class.png",
         label: "Courses",
         href: "/courses",

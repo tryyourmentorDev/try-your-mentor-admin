@@ -18,6 +18,16 @@ export const MENTOR_TYPES = [
 
 export type MentorType = (typeof MENTOR_TYPES)[number]["value"];
 
+// Mirrors the session_status enum in the database (sessions.status).
+export const SESSION_STATUSES = [
+  { value: "booked", label: "Booked" },
+  { value: "active", label: "Active" },
+  { value: "completed", label: "Completed" },
+  { value: "inactive", label: "Inactive" },
+] as const;
+
+export type SessionStatus = (typeof SESSION_STATUSES)[number]["value"];
+
 type RouteAccessMap = {
   [key: string]: string[];
 };
@@ -28,4 +38,6 @@ export const routeAccessMap: RouteAccessMap = {
   "/mentee(.*)": ["admin"],
   "/list/mentors": ["admin"],
   "/list/mentees": ["admin"],
+  "/list/bookings": ["admin"],
+  "/sessions": ["admin"],
 };

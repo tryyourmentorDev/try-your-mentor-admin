@@ -1,410 +1,178 @@
-"use client";
-import React, { useEffect, useMemo, useState } from "react";
-import BigCalendar, { CalendarEvent } from "@/components/BigCalender";
+import { Suspense } from "react";
+import Image from "next/image";
+import FormModel from "@/components/FromModel";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import SelectFilter from "@/components/SelectFilter";
+import SessionStatusBadge from "@/components/SessionStatusBadge";
+import Table from "@/components/Table";
+import TableSearch from "@/components/TableSearch";
+import { getSessionListAction } from "@/actions/session";
 import { getMentorListAction } from "@/actions/mentor";
-import { getAvailabilitySlotsAction } from "@/actions/availabilitySlot";
-import {
-  getBookingListAction,
-  createBookingAction,
-  updateBookingAction,
-  cancelBookingAction,
-} from "@/actions/booking";
+import { Session } from "@/entities/session-entity";
 import { Mentor } from "@/entities/mentor-entity";
-import { Booking } from "@/entities/booking-entity";
-import { AvailabilitySlot } from "@/entities/availability-slot-entity";
+import { SESSION_STATUSES } from "@/lib/settings";
+import { role } from "@/lib/data";
 
-// India-based product: render all times in IST regardless of the viewer.
 const IST = "Asia/Kolkata";
-
-const slotLabel = (slot: AvailabilitySlot) => {
-  const start = new Date(slot.startTime);
-  const end = new Date(slot.endTime);
-  const d = start.toLocaleDateString(undefined, {
+const formatIst = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    timeZone: IST,
     month: "short",
     day: "numeric",
-    timeZone: IST,
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
-  const t = (dt: Date) =>
-    dt.toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: IST,
-    });
-  return `${d}, ${t(start)} – ${t(end)} IST`;
-};
 
-const SessionManagerPage = () => {
-  const [mentors, setMentors] = useState<Mentor[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+const columns = [
+  { header: "Mentee", accessor: "mentee" },
+  { header: "Mentor", accessor: "mentor", className: "hidden md:table-cell" },
+  { header: "Scheduled (IST)", accessor: "scheduledAt", className: "hidden md:table-cell" },
+  { header: "Status", accessor: "status" },
+  { header: "Contacted", accessor: "contacted", className: "hidden lg:table-cell" },
+  { header: "Actions", accessor: "action" },
+];
 
-  // Create-form state
-  const [mentorId, setMentorId] = useState<number | "">("");
-  const [freeSlots, setFreeSlots] = useState<AvailabilitySlot[]>([]);
-  const [slotId, setSlotId] = useState<number | "">("");
-  const [menteeEmail, setMenteeEmail] = useState("");
-  const [menteeFirstName, setMenteeFirstName] = useState("");
-  const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
-
-  // Selected booking (for the update panel)
-  const [selected, setSelected] = useState<Booking | null>(null);
-  const [rescheduleSlotId, setRescheduleSlotId] = useState<number | "">("");
-
-  const flash = (m: string) => {
-    setMessage(m);
-    setError(null);
-  };
-  const fail = (m: string) => {
-    setError(m);
-    setMessage(null);
-  };
-
-  const loadBookings = async () => {
-    const res = await getBookingListAction();
-    if (res.error) return fail(res.message ?? "Failed to load bookings");
-    setBookings(res.data ?? []);
-  };
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [mentorRes, bookingRes] = await Promise.all([
-        getMentorListAction(),
-        getBookingListAction(),
-      ]);
-      if (mentorRes.error) fail(mentorRes.message ?? "Failed to load mentors");
-      else setMentors(mentorRes.data ?? []);
-      if (bookingRes.error)
-        fail(bookingRes.message ?? "Failed to load bookings");
-      else setBookings(bookingRes.data ?? []);
-      setLoading(false);
-    })();
-  }, []);
-
-  // Load the chosen mentor's free slots for the create form.
-  useEffect(() => {
-    if (mentorId === "") {
-      setFreeSlots([]);
-      setSlotId("");
-      return;
-    }
-    (async () => {
-      const res = await getAvailabilitySlotsAction(Number(mentorId));
-      if (!res.error && res.data) {
-        setFreeSlots(res.data.filter((s) => s.state === "free"));
-      }
-    })();
-  }, [mentorId]);
-
-  const calendarEvents: CalendarEvent[] = useMemo(
-    () =>
-      bookings
-        .filter((b) => b.status !== "cancelled")
-        .map((b) => ({
-          id: b.id,
-          title: `${b.menteeName || b.menteeEmail || "Mentee"} · ${
-            b.mentorName || "Mentor"
-          }`,
-          start: new Date(b.startTime),
-          end: new Date(b.endTime),
-          resource: b,
-        })),
-    [bookings]
+const ContactedBadge = ({ contacted }: { contacted: boolean }) =>
+  contacted ? (
+    <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+      Contacted
+    </span>
+  ) : (
+    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+      Not contacted
+    </span>
   );
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (mentorId === "" || slotId === "" || !menteeEmail.trim()) {
-      fail("Mentor, slot, and mentee email are required.");
-      return;
-    }
-    setBusy(true);
-    const res = await createBookingAction({
-      mentorId: Number(mentorId),
-      slotId: Number(slotId),
-      menteeEmail: menteeEmail.trim(),
-      menteeFirstName: menteeFirstName.trim() || undefined,
-      title: title.trim() || undefined,
-      notes: notes.trim() || undefined,
-    });
-    setBusy(false);
-    if (res.error) return fail(res.message ?? "Failed to create booking");
-    flash("Session booked.");
-    setSlotId("");
-    setMenteeEmail("");
-    setMenteeFirstName("");
-    setTitle("");
-    setNotes("");
-    await loadBookings();
-    // Refresh free slots (the one we just booked is now taken).
-    const slotsRes = await getAvailabilitySlotsAction(Number(mentorId));
-    if (!slotsRes.error && slotsRes.data)
-      setFreeSlots(slotsRes.data.filter((s) => s.state === "free"));
-  };
+const renderRow = (mentors: Mentor[]) => (item: Session) =>
+  (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="p-4">
+        <div className="flex flex-col">
+          <h3 className="font-semibold">{item.menteeName ?? "—"}</h3>
+          <p className="text-xs text-gray-500">{item.menteeEmail ?? "—"}</p>
+        </div>
+      </td>
+      <td className="hidden md:table-cell">{item.mentorName ?? "—"}</td>
+      <td className="hidden md:table-cell">{formatIst(item.scheduledAt)}</td>
+      <td>
+        <SessionStatusBadge status={item.status} />
+      </td>
+      <td className="hidden lg:table-cell">
+        <ContactedBadge contacted={item.contacted} />
+      </td>
+      <td>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <>
+              <FormModel table="session" type="update" data={item} id={item.id} mentors={mentors} />
+              <FormModel table="session" type="delete" id={item.id} />
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
 
-  const handleSelectEvent = (event: any) => {
-    setSelected(event.resource as Booking);
-    setRescheduleSlotId("");
-    setMessage(null);
-    setError(null);
-  };
+const SessionsTable = async ({
+  search,
+  status,
+  contacted,
+  mentorId,
+  mentors,
+}: {
+  search?: string;
+  status?: string;
+  contacted?: string;
+  mentorId?: string;
+  mentors: Mentor[];
+}) => {
+  const response = await getSessionListAction({
+    search,
+    status,
+    contacted: contacted === "true" ? true : contacted === "false" ? false : undefined,
+    mentorId: mentorId ? Number(mentorId) : undefined,
+  });
 
-  const changeStatus = async (status: "completed" | "cancelled") => {
-    if (!selected) return;
-    setBusy(true);
-    const res =
-      status === "cancelled"
-        ? await cancelBookingAction(selected.id)
-        : await updateBookingAction(selected.id, { status });
-    setBusy(false);
-    if (res.error) return fail(res.message ?? "Failed to update booking");
-    flash(status === "cancelled" ? "Booking cancelled." : "Marked completed.");
-    setSelected(null);
-    await loadBookings();
-  };
+  if (response.error) {
+    return (
+      <p className="text-red-600 text-sm mt-4">
+        Failed to load sessions: {response.message}
+      </p>
+    );
+  }
 
-  const reschedule = async () => {
-    if (!selected || rescheduleSlotId === "") return;
-    setBusy(true);
-    const res = await updateBookingAction(selected.id, {
-      slotId: Number(rescheduleSlotId),
-    });
-    setBusy(false);
-    if (res.error) return fail(res.message ?? "Failed to reschedule");
-    flash("Booking rescheduled.");
-    setSelected(null);
-    await loadBookings();
-  };
+  const sessions = response.data ?? [];
+  if (sessions.length === 0) {
+    return (
+      <p className="text-sm text-gray-500 mt-4">No sessions match the current filters.</p>
+    );
+  }
 
-  // Free slots for the selected booking's mentor (for rescheduling).
-  const [rescheduleSlots, setRescheduleSlots] = useState<AvailabilitySlot[]>([]);
-  useEffect(() => {
-    if (!selected) {
-      setRescheduleSlots([]);
-      return;
-    }
-    (async () => {
-      const res = await getAvailabilitySlotsAction(selected.mentorId);
-      if (!res.error && res.data)
-        setRescheduleSlots(res.data.filter((s) => s.state === "free"));
-    })();
-  }, [selected]);
+  return <Table columns={columns} renderRow={renderRow(mentors)} data={sessions} />;
+};
+
+const SessionListPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    search?: string;
+    status?: string;
+    contacted?: string;
+    mentor_id?: string;
+  }>;
+}) => {
+  const { search, status, contacted, mentor_id } = await searchParams;
+
+  const mentorsResponse = await getMentorListAction();
+  const mentors = mentorsResponse.data ?? [];
+  const mentorOptions = mentors.map((m) => ({
+    value: String(m.userId),
+    label: [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email,
+  }));
 
   return (
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT: calendar */}
-      <div className="w-full xl:w-2/3">
-        <div className="h-full bg-white p-4 rounded-md">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold">Sessions</h1>
-            {loading && (
-              <span className="text-xs text-gray-400">Loading…</span>
+    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+      {/* TOP */}
+      <div className="flex items-center justify-between">
+        <h1 className="hidden md:block text-lg font-semibold">Sessions</h1>
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <TableSearch placeholder="Search by mentee or mentor..." />
+          <div className="flex items-center gap-4 self-end flex-wrap">
+            <SelectFilter paramKey="mentor_id" label="All mentors" options={mentorOptions} />
+            <SelectFilter paramKey="status" label="All statuses" options={[...SESSION_STATUSES]} />
+            <SelectFilter
+              paramKey="contacted"
+              label="Contacted?"
+              options={[
+                { value: "true", label: "Contacted" },
+                { value: "false", label: "Not contacted" },
+              ]}
+            />
+            {role === "admin" && (
+              <FormModel table="session" type="create" mentors={mentors} />
             )}
           </div>
-          <BigCalendar
-            events={calendarEvents}
-            onSelectEvent={handleSelectEvent}
-            onSelectSlot={() => setSelected(null)}
-          />
         </div>
       </div>
-
-      {/* RIGHT: create / manage */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-6">
-        {message && <p className="text-sm text-green-600">{message}</p>}
-        {error && <p className="text-sm text-red-500">{error}</p>}
-
-        {selected ? (
-          <div className="bg-white p-4 rounded-md flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Manage session</h2>
-              <button
-                onClick={() => setSelected(null)}
-                className="text-xs text-gray-400"
-              >
-                Close
-              </button>
-            </div>
-            <div className="text-sm flex flex-col gap-1">
-              <p>
-                <span className="text-gray-400">Mentee: </span>
-                {selected.menteeName || selected.menteeEmail}
-              </p>
-              <p>
-                <span className="text-gray-400">Mentor: </span>
-                {selected.mentorName ?? "—"}
-              </p>
-              <p>
-                <span className="text-gray-400">When: </span>
-                {new Date(selected.startTime).toLocaleString(undefined, {
-                  timeZone: IST,
-                })}{" "}
-                IST
-              </p>
-              <p>
-                <span className="text-gray-400">Status: </span>
-                {selected.status}
-              </p>
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => changeStatus("completed")}
-                disabled={busy || selected.status !== "reserved"}
-                className="text-sm px-3 py-2 rounded-md bg-green-100 text-green-700 disabled:opacity-40"
-              >
-                Mark completed
-              </button>
-              <button
-                onClick={() => changeStatus("cancelled")}
-                disabled={busy || selected.status === "cancelled"}
-                className="text-sm px-3 py-2 rounded-md bg-red-100 text-red-700 disabled:opacity-40"
-              >
-                Cancel booking
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
-              <label className="text-xs text-gray-500">
-                Reschedule to another free slot
-              </label>
-              <select
-                className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                value={rescheduleSlotId}
-                onChange={(e) =>
-                  setRescheduleSlotId(
-                    e.target.value === "" ? "" : Number(e.target.value)
-                  )
-                }
-              >
-                <option value="">Select a slot</option>
-                {rescheduleSlots.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {slotLabel(s)}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={reschedule}
-                disabled={busy || rescheduleSlotId === ""}
-                className="self-start text-sm px-3 py-2 rounded-md bg-lamaSky disabled:opacity-40"
-              >
-                Reschedule
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white p-4 rounded-md flex flex-col gap-4">
-            <h2 className="text-lg font-semibold">Book a session</h2>
-            <form className="flex flex-col gap-4" onSubmit={handleCreate}>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Mentor</label>
-                <select
-                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                  value={mentorId}
-                  onChange={(e) =>
-                    setMentorId(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
-                  }
-                >
-                  <option value="">Select a mentor</option>
-                  {mentors.map((m) => (
-                    <option key={m.userId} value={m.userId}>
-                      {[m.firstName, m.lastName].filter(Boolean).join(" ") ||
-                        m.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">
-                  Free slot{" "}
-                  {mentorId !== "" && freeSlots.length === 0 && (
-                    <span className="text-red-400">
-                      (no free slots for this mentor)
-                    </span>
-                  )}
-                </label>
-                <select
-                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                  value={slotId}
-                  disabled={mentorId === ""}
-                  onChange={(e) =>
-                    setSlotId(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
-                  }
-                >
-                  <option value="">Select a slot</option>
-                  {freeSlots.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {slotLabel(s)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Mentee email</label>
-                <input
-                  type="email"
-                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                  value={menteeEmail}
-                  onChange={(e) => setMenteeEmail(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">
-                  Mentee name (optional)
-                </label>
-                <input
-                  type="text"
-                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                  value={menteeFirstName}
-                  onChange={(e) => setMenteeFirstName(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Title (optional)</label>
-                <input
-                  type="text"
-                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-500">Notes (optional)</label>
-                <textarea
-                  className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={busy}
-                className="bg-blue-400 text-white p-2 rounded-md disabled:opacity-60"
-              >
-                {busy ? "Booking…" : "Book session"}
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
+      {/* LIST */}
+      <Suspense
+        key={`${search ?? ""}:${status ?? ""}:${contacted ?? ""}:${mentor_id ?? ""}`}
+        fallback={<LoadingOverlay />}
+      >
+        <SessionsTable
+          search={search}
+          status={status}
+          contacted={contacted}
+          mentorId={mentor_id}
+          mentors={mentors}
+        />
+      </Suspense>
     </div>
   );
 };
 
-export default SessionManagerPage;
+export default SessionListPage;

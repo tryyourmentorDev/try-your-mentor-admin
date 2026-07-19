@@ -3,8 +3,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MentorForm from "./forms/MentorForm";
+import SessionForm from "./forms/SessionForm";
 import { deleteMentorAction } from "../actions/mentor";
+import { deleteSessionAction } from "../actions/session";
 import { Mentor } from "../entities/mentor-entity";
+import { Session } from "../entities/session-entity";
 import { JobRole } from "../entities/job-role-entity";
 import { Qualification } from "../entities/qualification-entity";
 
@@ -15,13 +18,15 @@ const FormModel = ({
   id,
   jobRoles = [],
   qualifications = [],
+  mentors = [],
 }: {
-  table: "mentor" | "mentee";
+  table: "mentor" | "mentee" | "session";
   type: "create" | "update" | "delete";
-  data?: Mentor;
+  data?: Mentor | Session;
   id?: number | string;
   jobRoles?: JobRole[];
   qualifications?: Qualification[];
+  mentors?: Mentor[];
 }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -38,12 +43,15 @@ const FormModel = ({
 
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || table !== "mentor") return;
+    if (!id || (table !== "mentor" && table !== "session")) return;
 
     setDeleting(true);
     setDeleteError(null);
 
-    const response = await deleteMentorAction(Number(id));
+    const response =
+      table === "mentor"
+        ? await deleteMentorAction(Number(id))
+        : await deleteSessionAction(Number(id));
 
     if (response.error) {
       setDeleteError(response.message ?? "Something went wrong");
@@ -58,12 +66,14 @@ const FormModel = ({
 
   const renderForm = () => {
     if (type === "delete" && id) {
+      // Mentor delete is a soft-deactivate; session delete is a hard delete.
+      const isSoft = table === "mentor";
       return (
         <form onSubmit={handleDelete} className="p-4 flex flex-col gap-4">
           <span className="text-center font-medium">
-            This will mark the {table} as inactive. Their history (bookings,
-            sessions, reviews) is kept — this does not permanently delete
-            data. Continue?
+            {isSoft
+              ? `This will mark the ${table} as inactive. Their history (bookings, sessions, reviews) is kept — this does not permanently delete data. Continue?`
+              : `This will permanently delete this ${table}. Continue?`}
           </span>
           {deleteError && (
             <p className="text-sm text-red-500 text-center">{deleteError}</p>
@@ -73,7 +83,13 @@ const FormModel = ({
             disabled={deleting}
             className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center disabled:opacity-60"
           >
-            {deleting ? "Deactivating..." : "Deactivate"}
+            {deleting
+              ? isSoft
+                ? "Deactivating..."
+                : "Deleting..."
+              : isSoft
+              ? "Deactivate"
+              : "Delete"}
           </button>
         </form>
       );
@@ -83,9 +99,20 @@ const FormModel = ({
       return (
         <MentorForm
           type={type}
-          data={data}
+          data={data as Mentor}
           jobRoles={jobRoles}
           qualifications={qualifications}
+          onSuccess={() => setOpen(false)}
+        />
+      );
+    }
+
+    if (table === "session" && (type === "create" || type === "update")) {
+      return (
+        <SessionForm
+          type={type}
+          data={data as Session}
+          mentors={mentors}
           onSuccess={() => setOpen(false)}
         />
       );
