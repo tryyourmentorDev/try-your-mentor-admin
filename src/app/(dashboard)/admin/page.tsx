@@ -14,8 +14,7 @@ const AdminPage = async () => {
     );
   }
 
-  const { mentorCount, menteeCount, activeSessionCount, completedSessionCount } =
-    response.data;
+  const { mentorCount, menteeCount, completedSessionCount } = response.data;
 
   return (
     <div className="p-4 flex gap-4 flex-col md:flex-row">
@@ -25,7 +24,6 @@ const AdminPage = async () => {
         <div className="flex gap-4 justify-between flex-wrap">
           <UserCard type="Mentors" count={mentorCount} />
           <UserCard type="Mentees" count={menteeCount} />
-          <UserCard type="Active Sessions" count={activeSessionCount} />
           <UserCard type="Completed Sessions" count={completedSessionCount} />
         </div>
       </div>
