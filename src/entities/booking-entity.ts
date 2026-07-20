@@ -1,4 +1,5 @@
 export type BookingStatus = "reserved" | "completed" | "cancelled";
+export type BookingConfirmationEmailStatus = "pending" | "sent" | "failed";
 
 // A booking is the mentee's raw reservation. Each has one linked session
 // (session_status + contacted) that the admin manages separately.
@@ -13,6 +14,7 @@ export interface Booking {
   title: string | null;
   notes: string | null;
   createdAt: string;
+  bookingConfirmationEmailStatus: BookingConfirmationEmailStatus | null;
   mentorName: string | null;
   menteeName: string | null;
   menteeEmail: string | null;

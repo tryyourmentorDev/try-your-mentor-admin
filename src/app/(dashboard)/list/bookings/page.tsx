@@ -25,6 +25,12 @@ const BOOKING_STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-gray-200 text-gray-600",
 };
 
+const EMAIL_STATUS_STYLES: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-700",
+  sent: "bg-green-100 text-green-700",
+  failed: "bg-red-100 text-red-700",
+};
+
 const columns = [
   { header: "Mentee", accessor: "mentee" },
   { header: "Mentor", accessor: "mentor", className: "hidden md:table-cell" },
@@ -32,6 +38,7 @@ const columns = [
   { header: "Booking", accessor: "status" },
   { header: "Session", accessor: "session", className: "hidden lg:table-cell" },
   { header: "Contacted", accessor: "contacted", className: "hidden lg:table-cell" },
+  { header: "Confirmation Email", accessor: "email", className: "hidden lg:table-cell" },
 ];
 
 const renderRow = (item: Booking) => (
@@ -72,6 +79,19 @@ const renderRow = (item: Booking) => (
         <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
           Not contacted
         </span>
+      )}
+    </td>
+    <td className="hidden lg:table-cell">
+      {item.bookingConfirmationEmailStatus ? (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+            EMAIL_STATUS_STYLES[item.bookingConfirmationEmailStatus] ?? "bg-gray-100 text-gray-600"
+          }`}
+        >
+          {item.bookingConfirmationEmailStatus}
+        </span>
+      ) : (
+        <span className="text-gray-400">—</span>
       )}
     </td>
   </tr>

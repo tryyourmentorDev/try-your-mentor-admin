@@ -20,6 +20,7 @@ function mapBooking(b: any): Booking {
     title: b.title ?? null,
     notes: b.notes ?? null,
     createdAt: b.created_at,
+    bookingConfirmationEmailStatus: b.booking_confirmation_email_status ?? null,
     mentorName: b.mentor_name ?? null,
     menteeName: b.mentee_name ?? null,
     menteeEmail: b.mentee_email ?? null,
