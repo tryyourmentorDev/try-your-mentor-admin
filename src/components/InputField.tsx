@@ -8,6 +8,7 @@ type InputFieldProps = {
   defaultValue?: string;
   error?: FieldError;
   hidden?: boolean;
+  required?: boolean;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
 
@@ -19,11 +20,15 @@ const InputField = ({
   defaultValue,
   error,
   hidden,
+  required,
   inputProps,
 }: InputFieldProps) => {
   return (
     <div className={hidden ? "hidden" : "flex flex-col gap-2 w-full"}>
-      <label className="text-xs text-gray-500">{label}</label>
+      <label className="text-xs text-gray-500">
+        {label}
+        {required && <span className="text-red-400"> *</span>}
+      </label>
       <input
         type={type}
         {...register(name)}

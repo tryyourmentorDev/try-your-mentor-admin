@@ -80,6 +80,7 @@ const MenteeForm = ({
           defaultValue={data?.firstName}
           register={register}
           error={errors?.firstName}
+          required
         />
         <InputField
           label="Last Name"
@@ -87,6 +88,7 @@ const MenteeForm = ({
           defaultValue={data?.lastName ?? ""}
           register={register}
           error={errors?.lastName}
+          required
         />
         <InputField
           label="Email"
@@ -94,6 +96,7 @@ const MenteeForm = ({
           defaultValue={data?.email}
           register={register}
           error={errors?.email}
+          required
         />
       </div>
 
@@ -103,7 +106,7 @@ const MenteeForm = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">
-            Education Qualification
+            Education Qualification<span className="text-red-400"> *</span>
           </label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
@@ -125,7 +128,9 @@ const MenteeForm = ({
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <label className="text-xs text-gray-500">Current Job Role</label>
+          <label className="text-xs text-gray-500">
+            Current Job Role<span className="text-red-400"> *</span>
+          </label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("currentJobRoleId")}
@@ -146,7 +151,9 @@ const MenteeForm = ({
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <label className="text-xs text-gray-500">Expected Job Role</label>
+          <label className="text-xs text-gray-500">
+            Expected Job Role<span className="text-red-400"> *</span>
+          </label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("expectedJobRoleId")}
@@ -176,6 +183,7 @@ const MenteeForm = ({
           register={register}
           error={errors?.experienceYears}
           inputProps={{ min: 0 }}
+          required
         />
       </div>
 

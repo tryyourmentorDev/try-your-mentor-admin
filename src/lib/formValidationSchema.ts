@@ -23,6 +23,14 @@ const optionalString = z
   .optional()
   .transform((val) => (val === "" ? undefined : val));
 
+// Same empty-string -> undefined coercion as optionalNumber, but the result
+// must not be undefined — used for select/number fields that are required.
+const requiredNumber = (message: string) =>
+  z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number({ required_error: message, invalid_type_error: message })
+  );
+
 export const MentorSchema = z.object({
   userId: z.number().optional(), // present only when editing
   firstName: z.string().min(1, { message: "First name is required!" }),
@@ -46,12 +54,17 @@ export type MentorFormValues = z.infer<typeof MentorSchema>;
 export const MenteeSchema = z.object({
   userId: z.number().optional(), // present only when editing
   firstName: z.string().min(1, { message: "First name is required!" }),
-  lastName: optionalString,
-  email: z.string().email({ message: "Invalid email address!" }),
-  educationQualificationId: optionalNumber,
-  currentJobRoleId: optionalNumber,
-  expectedJobRoleId: optionalNumber,
-  experienceYears: optionalNumber,
+  lastName: z.string().min(1, { message: "Last name is required!" }),
+  email: z
+    .string()
+    .min(1, { message: "Email is required!" })
+    .email({ message: "Invalid email address!" }),
+  educationQualificationId: requiredNumber(
+    "Education qualification is required!"
+  ),
+  currentJobRoleId: requiredNumber("Current job role is required!"),
+  expectedJobRoleId: requiredNumber("Expected job role is required!"),
+  experienceYears: requiredNumber("Experience (years) is required!"),
 });
 
 export type MenteeFormValues = z.infer<typeof MenteeSchema>;
