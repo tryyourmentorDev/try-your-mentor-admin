@@ -13,6 +13,7 @@ import { Mentee } from "../entities/mentee-entity";
 import { Session } from "../entities/session-entity";
 import { JobRole } from "../entities/job-role-entity";
 import { Qualification } from "../entities/qualification-entity";
+import { Industry } from "../actions/industry";
 
 const HARD_DELETE_TABLES = ["mentee", "session"] as const;
 
@@ -24,6 +25,7 @@ const FormModel = ({
   jobRoles = [],
   qualifications = [],
   mentors = [],
+  industries = [],
 }: {
   table: "mentor" | "mentee" | "session";
   type: "create" | "update" | "delete";
@@ -32,6 +34,7 @@ const FormModel = ({
   jobRoles?: JobRole[];
   qualifications?: Qualification[];
   mentors?: Mentor[];
+  industries?: Industry[];
 }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -111,6 +114,7 @@ const FormModel = ({
           data={data as Mentor}
           jobRoles={jobRoles}
           qualifications={qualifications}
+          industries={industries}
           onSuccess={() => setOpen(false)}
         />
       );

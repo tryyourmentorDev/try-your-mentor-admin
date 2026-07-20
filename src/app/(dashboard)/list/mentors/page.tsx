@@ -9,6 +9,7 @@ import TableSearch from "@/components/TableSearch";
 import { getMentorListAction } from "@/actions/mentor";
 import { getJobRoleListAction } from "@/actions/jobRole";
 import { getQualificationListAction } from "@/actions/qualification";
+import { getIndustryListAction } from "@/actions/industry";
 import { Mentor } from "@/entities/mentor-entity";
 import { role } from "@/lib/data";
 import Image from "next/image";
@@ -128,12 +129,14 @@ const MentorListPage = async ({
 }) => {
   const { search, status } = await searchParams;
 
-  const [jobRolesResponse, qualificationsResponse] = await Promise.all([
+  const [jobRolesResponse, qualificationsResponse, industriesResponse] = await Promise.all([
     getJobRoleListAction(),
     getQualificationListAction(),
+    getIndustryListAction(),
   ]);
   const jobRoles = jobRolesResponse.data ?? [];
   const qualifications = qualificationsResponse.data ?? [];
+  const industries = industriesResponse.data ?? [];
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -153,6 +156,7 @@ const MentorListPage = async ({
                 type="create"
                 jobRoles={jobRoles}
                 qualifications={qualifications}
+                industries={industries}
               />
             )}
           </div>

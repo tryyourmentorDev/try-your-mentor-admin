@@ -1,5 +1,10 @@
 import { MentorStatus, MentorType } from "@/lib/settings";
 
+export interface Expertise {
+  id: number;
+  name: string;
+}
+
 export interface Mentor {
   userId: number;
   email: string;
@@ -21,6 +26,7 @@ export interface Mentor {
   location: string | null;
   languages: string | null;
   createdAt: string;
+  expertises: Expertise[];
 }
 
 // Fields the create/update mentor form submits. IDs (job role, qualification)
@@ -47,4 +53,5 @@ export interface MentorFormInput {
     mimeType: string;
     base64: string;
   };
+  expertiseIds?: number[];
 }

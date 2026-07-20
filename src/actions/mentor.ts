@@ -26,6 +26,7 @@ function mapMentor(mentor: any): Mentor {
     location: mentor.location,
     languages: mentor.languages,
     createdAt: mentor.created_at,
+    expertises: (mentor.expertises ?? []).map((e: any) => ({ id: e.id, name: e.name })),
   };
 }
 
@@ -48,6 +49,9 @@ function toMentorRequestBody(input: MentorFormInput) {
     languages: input.languages || undefined,
     // Only included when a new photo was picked — see MentorFormInput.
     profile_image: input.profileImage || undefined,
+    // Always sent (defaulting to []) so deselecting every expertise actually
+    // clears the mentor's set instead of leaving the old rows untouched.
+    expertise_ids: input.expertiseIds ?? [],
   };
 }
 

@@ -1,6 +1,7 @@
 import { getMentorAction } from "@/actions/mentor";
 import { getJobRoleListAction } from "@/actions/jobRole";
 import { getQualificationListAction } from "@/actions/qualification";
+import { getIndustryListAction } from "@/actions/industry";
 import { getWeeklyScheduleAction } from "@/actions/weeklySchedule";
 import { getAvailabilitySlotsAction } from "@/actions/availabilitySlot";
 import AvailabilityManager from "@/components/AvailabilityManager";
@@ -23,12 +24,14 @@ const MentorDetailPage = async ({
     response,
     jobRolesResponse,
     qualificationsResponse,
+    industriesResponse,
     weeklyResponse,
     slotsResponse,
   ] = await Promise.all([
     getMentorAction(id),
     getJobRoleListAction(),
     getQualificationListAction(),
+    getIndustryListAction(),
     getWeeklyScheduleAction(mentorId),
     getAvailabilitySlotsAction(mentorId),
   ]);
@@ -49,6 +52,7 @@ const MentorDetailPage = async ({
   const mentor = response.data!;
   const jobRoles = jobRolesResponse.data ?? [];
   const qualifications = qualificationsResponse.data ?? [];
+  const industries = industriesResponse.data ?? [];
   const weeklySchedule = weeklyResponse.data ?? [];
   const availabilitySlots = slotsResponse.data ?? [];
   const fullName =
@@ -81,6 +85,7 @@ const MentorDetailPage = async ({
                     id={mentor.userId}
                     jobRoles={jobRoles}
                     qualifications={qualifications}
+                    industries={industries}
                   />
                 )}
               </div>
@@ -169,6 +174,14 @@ const MentorDetailPage = async ({
               <span className="text-xs text-gray-400">Joined</span>
               <span className="text-sm font-medium">
                 {new Date(mentor.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 col-span-2 md:col-span-4">
+              <span className="text-xs text-gray-400">Expertise</span>
+              <span className="text-sm font-medium">
+                {mentor.expertises.length > 0
+                  ? mentor.expertises.map((e) => e.name).join(", ")
+                  : "—"}
               </span>
             </div>
           </div>

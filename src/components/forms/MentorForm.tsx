@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Image from "next/image";
 import {
   MentorSchema,
@@ -10,9 +10,11 @@ import {
 } from "../../lib/formValidationSchema";
 import { MENTOR_TYPES } from "../../lib/settings";
 import { createMentorAction, updateMentorAction } from "../../actions/mentor";
-import { Mentor } from "../../entities/mentor-entity";
+import { getExpertiseListAction } from "../../actions/expertise";
+import { Expertise, Mentor } from "../../entities/mentor-entity";
 import { JobRole } from "../../entities/job-role-entity";
 import { Qualification } from "../../entities/qualification-entity";
+import { Industry } from "../../actions/industry";
 import InputField from "../InputField";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -31,12 +33,14 @@ const MentorForm = ({
   data,
   jobRoles,
   qualifications,
+  industries,
   onSuccess,
 }: {
   type: "create" | "update";
   data?: Mentor;
   jobRoles: JobRole[];
   qualifications: Qualification[];
+  industries: Industry[];
   onSuccess?: () => void;
 }) => {
   const router = useRouter();
@@ -49,6 +53,44 @@ const MentorForm = ({
   const [profileImage, setProfileImage] = useState<
     { fileName: string; mimeType: string; base64: string } | undefined
   >(undefined);
+
+  // Industry is UI-only (mentors has no industry_id column) — it just scopes
+  // which expertise checkboxes are offered. Selected expertise ids are kept
+  // independent of the currently-browsed industry, so switching industries
+  // never drops previously-checked items picked under a different one.
+  const [industryId, setIndustryId] = useState<number | undefined>(undefined);
+  const [expertiseOptions, setExpertiseOptions] = useState<Expertise[]>([]);
+  const [expertiseLoading, setExpertiseLoading] = useState(false);
+  const [selectedExpertise, setSelectedExpertise] = useState<Map<number, string>>(
+    () => new Map((data?.expertises ?? []).map((e) => [e.id, e.name]))
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setExpertiseLoading(true);
+    getExpertiseListAction(industryId).then((response) => {
+      if (cancelled) return;
+      setExpertiseLoading(false);
+      if (!response.error) {
+        setExpertiseOptions(response.data ?? []);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [industryId]);
+
+  const toggleExpertise = (expertise: Expertise) => {
+    setSelectedExpertise((prev) => {
+      const next = new Map(prev);
+      if (next.has(expertise.id)) {
+        next.delete(expertise.id);
+      } else {
+        next.set(expertise.id, expertise.name);
+      }
+      return next;
+    });
+  };
 
   const handleImageChange = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -102,7 +144,11 @@ const MentorForm = ({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
 
-    const payload = { ...values, profileImage };
+    const payload = {
+      ...values,
+      profileImage,
+      expertiseIds: Array.from(selectedExpertise.keys()),
+    };
 
     const response =
       type === "create"
@@ -328,6 +374,75 @@ const MentorForm = ({
               {errors.bio.message.toString()}
             </p>
           )}
+        </div>
+      </div>
+
+      <span className="text-xs text-gray-400 font-medium">Expertise</span>
+      <div className="flex flex-col gap-3">
+        {selectedExpertise.size > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {Array.from(selectedExpertise.entries()).map(([id, name]) => (
+              <span
+                key={id}
+                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-lamaSkyLight text-gray-700"
+              >
+                {name}
+                <button
+                  type="button"
+                  aria-label={`Remove ${name}`}
+                  className="text-gray-400 hover:text-gray-700"
+                  onClick={() => toggleExpertise({ id, name })}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 w-full sm:w-1/2 lg:w-1/3">
+          <label className="text-xs text-gray-500">
+            Industry (to browse more expertise to add)
+          </label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
+            value={industryId ?? ""}
+            onChange={(e) =>
+              setIndustryId(e.target.value ? Number(e.target.value) : undefined)
+            }
+          >
+            <option value="">All industries</option>
+            {industries.map((industry) => (
+              <option key={industry.id} value={industry.id}>
+                {industry.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {expertiseLoading && (
+            <p className="text-xs text-gray-400">Loading expertise…</p>
+          )}
+          {!expertiseLoading && expertiseOptions.length === 0 && (
+            <p className="text-xs text-gray-400">
+              No expertise found for this filter.
+            </p>
+          )}
+          {!expertiseLoading &&
+            expertiseOptions.map((expertise) => (
+              <label
+                key={expertise.id}
+                className="flex items-center gap-2 text-sm text-gray-600"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedExpertise.has(expertise.id)}
+                  onChange={() => toggleExpertise(expertise)}
+                />
+                {expertise.name}
+              </label>
+            ))}
         </div>
       </div>
 

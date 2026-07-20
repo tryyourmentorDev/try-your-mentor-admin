@@ -47,6 +47,7 @@ export const MentorSchema = z.object({
   company: optionalString,
   location: optionalString,
   languages: optionalString,
+  expertiseIds: z.array(z.number()).optional(),
 });
 
 export type MentorFormValues = z.infer<typeof MentorSchema>;
