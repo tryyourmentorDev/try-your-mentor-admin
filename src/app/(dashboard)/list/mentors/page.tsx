@@ -52,7 +52,7 @@ const renderRow = (item: Mentor) => (
   >
     <td className="flex items-center gap-4 p-4">
       <Image
-        src={item.profileImageUrl || "/noAvatar.png"}
+        src={item.profileImageUrl || "/avatar.png"}
         alt=""
         width={40}
         height={40}

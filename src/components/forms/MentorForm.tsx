@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import Image from "next/image";
 import {
   MentorSchema,
@@ -40,6 +40,7 @@ const MentorForm = ({
   onSuccess?: () => void;
 }) => {
   const router = useRouter();
+  const fileInputId = useId();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
@@ -133,19 +134,38 @@ const MentorForm = ({
         Profile Picture
       </span>
       <div className="flex items-center gap-4">
-        <Image
-          src={previewUrl || "/noAvatar.png"}
-          alt=""
-          width={64}
-          height={64}
-          className="w-16 h-16 rounded-full object-cover ring-1 ring-gray-200"
-        />
+        <div className="relative w-20 h-20 shrink-0">
+          <Image
+            src={previewUrl || "/avatar.png"}
+            alt=""
+            width={80}
+            height={80}
+            className="w-20 h-20 rounded-full object-cover ring-1 ring-gray-200 bg-gray-50"
+          />
+          <label
+            htmlFor={fileInputId}
+            className="absolute bottom-0 right-0 w-7 h-7 flex items-center justify-center rounded-full bg-blue-500 text-white ring-2 ring-white cursor-pointer hover:bg-blue-600 transition-colors"
+            aria-label="Change profile picture"
+          >
+            <Image src="/upload.png" alt="" width={13} height={13} />
+          </label>
+        </div>
         <div className="flex flex-col gap-1">
+          <label
+            htmlFor={fileInputId}
+            className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer w-max"
+          >
+            Upload photo
+          </label>
+          <span className="text-xs text-gray-400">
+            JPEG, PNG or WEBP, up to 5MB
+          </span>
           <input
+            id={fileInputId}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={handleImageChange}
-            className="text-sm"
+            className="hidden"
           />
           {imageError && <p className="text-xs text-red-400">{imageError}</p>}
         </div>
@@ -154,7 +174,7 @@ const MentorForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Personal Information
       </span>
-      <div className="flex justify-between flex-wrap gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <InputField
           label="First Name"
           name="firstName"
@@ -202,11 +222,11 @@ const MentorForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Mentor Profile
       </span>
-      <div className="flex justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Job Role</label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("jobRoleId")}
             defaultValue={data?.jobRoleId ?? ""}
           >
@@ -224,12 +244,12 @@ const MentorForm = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">
             Highest Qualification
           </label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("highestQualificationId")}
             defaultValue={data?.highestQualificationId ?? ""}
           >
@@ -247,10 +267,10 @@ const MentorForm = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Mentor Type</label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("mentorType")}
             defaultValue={data?.mentorType ?? "All"}
           >
@@ -295,10 +315,10 @@ const MentorForm = ({
           inputProps={{ min: 0 }}
         />
 
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex flex-col gap-2 w-full sm:col-span-2 lg:col-span-3">
           <label className="text-xs text-gray-500">Bio</label>
           <textarea
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             rows={3}
             {...register("bio")}
             defaultValue={data?.bio ?? ""}
@@ -316,7 +336,7 @@ const MentorForm = ({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-blue-400 text-white p-2 rounded-md disabled:opacity-60"
+        className="w-full sm:w-auto sm:self-end sm:px-8 bg-blue-400 text-white p-2 rounded-md disabled:opacity-60 hover:bg-blue-500 transition-colors"
       >
         {isSubmitting ? "Saving..." : type === "create" ? "Create" : "Update"}
       </button>

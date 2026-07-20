@@ -44,7 +44,7 @@ const TableSearch = ({
         placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-[200px] p-2 bg-transparent outline-none"
+        className="w-full md:w-[200px] p-2 bg-transparent outline-none"
       />
     </div>
   );

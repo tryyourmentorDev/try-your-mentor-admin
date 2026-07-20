@@ -73,7 +73,7 @@ const MenteeForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Personal Information
       </span>
-      <div className="flex justify-between flex-wrap gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <InputField
           label="First Name"
           name="firstName"
@@ -100,13 +100,13 @@ const MenteeForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Mentee Profile
       </span>
-      <div className="flex justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">
             Education Qualification
           </label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("educationQualificationId")}
             defaultValue={data?.educationQualificationId ?? ""}
           >
@@ -124,10 +124,10 @@ const MenteeForm = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Current Job Role</label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("currentJobRoleId")}
             defaultValue={data?.currentJobRoleId ?? ""}
           >
@@ -145,10 +145,10 @@ const MenteeForm = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Expected Job Role</label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
             {...register("expectedJobRoleId")}
             defaultValue={data?.expectedJobRoleId ?? ""}
           >
@@ -184,7 +184,7 @@ const MenteeForm = ({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-blue-400 text-white p-2 rounded-md disabled:opacity-60"
+        className="w-full sm:w-auto sm:self-end sm:px-8 bg-blue-400 text-white p-2 rounded-md disabled:opacity-60 hover:bg-blue-500 transition-colors"
       >
         {isSubmitting ? "Saving..." : type === "create" ? "Create" : "Update"}
       </button>

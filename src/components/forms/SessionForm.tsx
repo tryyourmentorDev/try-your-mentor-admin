@@ -97,13 +97,13 @@ const SessionForm = ({
         {type === "create" ? "Create a session" : "Update session"}
       </h1>
 
-      <div className="flex justify-between flex-wrap gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Mentor */}
-        <div className="flex flex-col gap-2 w-full md:w-[47%]">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Mentor</label>
           {type === "create" ? (
             <select
-              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
               value={mentorId}
               onChange={(e) =>
                 setMentorId(e.target.value === "" ? "" : Number(e.target.value))
@@ -122,12 +122,12 @@ const SessionForm = ({
         </div>
 
         {/* Mentee */}
-        <div className="flex flex-col gap-2 w-full md:w-[47%]">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Mentee email</label>
           {type === "create" ? (
             <input
               type="email"
-              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
               value={menteeEmail}
               onChange={(e) => setMenteeEmail(e.target.value)}
             />
@@ -139,11 +139,11 @@ const SessionForm = ({
         </div>
 
         {type === "create" && (
-          <div className="flex flex-col gap-2 w-full md:w-[47%]">
+          <div className="flex flex-col gap-2 w-full">
             <label className="text-xs text-gray-500">Mentee name (optional)</label>
             <input
               type="text"
-              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full focus:ring-2 focus:ring-blue-400 outline-none transition-shadow"
               value={menteeFirstName}
               onChange={(e) => setMenteeFirstName(e.target.value)}
             />
@@ -151,7 +151,7 @@ const SessionForm = ({
         )}
 
         {/* Scheduled at (IST) */}
-        <div className="flex flex-col gap-2 w-full md:w-[47%]">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Scheduled at (IST)</label>
           <input
             type="datetime-local"
@@ -162,7 +162,7 @@ const SessionForm = ({
         </div>
 
         {/* Status */}
-        <div className="flex flex-col gap-2 w-full md:w-[47%]">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Status</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -178,7 +178,7 @@ const SessionForm = ({
         </div>
 
         {/* Session type */}
-        <div className="flex flex-col gap-2 w-full md:w-[47%]">
+        <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Session type (optional)</label>
           <input
             type="text"
@@ -189,7 +189,7 @@ const SessionForm = ({
         </div>
 
         {/* Meeting link */}
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex flex-col gap-2 w-full sm:col-span-2">
           <label className="text-xs text-gray-500">Meeting link (optional)</label>
           <input
             type="text"
@@ -201,7 +201,7 @@ const SessionForm = ({
 
         {/* Contacted (edit only) */}
         {type === "update" && (
-          <label className="flex items-center gap-2 w-full">
+          <label className="flex items-center gap-2 w-full sm:col-span-2">
             <input
               type="checkbox"
               checked={contacted}
@@ -217,7 +217,7 @@ const SessionForm = ({
       <button
         type="submit"
         disabled={saving}
-        className="bg-blue-400 text-white p-2 rounded-md disabled:opacity-60"
+        className="w-full sm:w-auto sm:self-end sm:px-8 bg-blue-400 text-white p-2 rounded-md disabled:opacity-60 hover:bg-blue-500 transition-colors"
       >
         {saving ? "Saving..." : type === "create" ? "Create" : "Update"}
       </button>

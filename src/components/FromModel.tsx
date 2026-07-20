@@ -151,15 +151,23 @@ const FormModel = ({
         <Image src={`/${type}.png`} alt="" width={16} height={16} />
       </button>
       {open && (
-        <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[90vh] overflow-y-auto">
-            {renderForm()}
-            <div
-              className="absolute top-4 right-4 cursor-pointer"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-[1px] z-50 flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl relative w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 sm:p-7"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
               onClick={() => setOpen(false)}
             >
               <Image src="/close.png" alt="" width={14} height={14} />
-            </div>
+            </button>
+            {renderForm()}
           </div>
         </div>
       )}
