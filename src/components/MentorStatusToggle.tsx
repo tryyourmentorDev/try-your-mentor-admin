@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateMentorStatusAction } from "@/actions/mentor";
 import { MentorStatus } from "@/lib/settings";
+import { useMentorAvailability } from "@/context/MentorAvailabilityContext";
 
 // Standalone Active/Inactive toggle for the mentor profile view.
 // 'approval_pending' is create-time-only and isn't reachable from here —
@@ -11,19 +12,18 @@ import { MentorStatus } from "@/lib/settings";
 const MentorStatusToggle = ({
   mentorId,
   status,
-  hasAvailabilitySlots,
 }: {
   mentorId: number;
   status: MentorStatus | null;
-  hasAvailabilitySlots: boolean;
 }) => {
   const router = useRouter();
+  const { hasActiveSlots } = useMentorAvailability();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isActive = status === "active";
   const targetStatus: "active" | "inactive" = isActive ? "inactive" : "active";
-  const blockedFromActivating = !isActive && !hasAvailabilitySlots;
+  const blockedFromActivating = !isActive && !hasActiveSlots;
 
   const handleToggle = async () => {
     setSubmitting(true);

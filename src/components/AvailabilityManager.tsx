@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   getAvailabilitySlotsAction,
   createAvailabilitySlotAction,
@@ -14,6 +14,7 @@ import {
   SlotState,
 } from "@/entities/availability-slot-entity";
 import { WeeklyScheduleRow } from "@/entities/weekly-schedule-entity";
+import { useMentorAvailability } from "@/context/MentorAvailabilityContext";
 
 const WEEKDAYS = [
   { value: 0, label: "Sunday" },
@@ -83,12 +84,21 @@ const AvailabilityManager = ({
   initialWeekly: WeeklyScheduleRow[];
   initialSlots: AvailabilitySlot[];
 }) => {
+  const { setHasActiveSlots } = useMentorAvailability();
   const [weekly, setWeekly] = useState<WeeklyRowState[]>(
     buildWeeklyState(initialWeekly),
   );
   const [timezone, setTimezone] = useState(initialWeekly[0]?.timezone ?? IST);
   const [slots, setSlots] = useState<AvailabilitySlot[]>(initialSlots);
   const [message, setMessage] = useState<string | null>(null);
+
+  // Keeps the "Set Active" button (rendered in the header, outside this
+  // component) in sync the instant slots are generated/added/toggled —
+  // without this, activating a mentor stayed disabled until a full reload.
+  useEffect(() => {
+    setHasActiveSlots(slots.some((s) => s.isActive));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
