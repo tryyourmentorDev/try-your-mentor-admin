@@ -25,6 +25,7 @@ function mapMentor(mentor: any): Mentor {
     profileImageUrl: mentor.profile_image_url,
     location: mentor.location,
     languages: mentor.languages,
+    linkedinUrl: mentor.linkedin_url,
     createdAt: mentor.created_at,
     expertises: (mentor.expertises ?? []).map((e: any) => ({ id: e.id, name: e.name })),
   };
@@ -47,6 +48,7 @@ function toMentorRequestBody(input: MentorFormInput) {
     company: input.company || undefined,
     location: input.location || undefined,
     languages: input.languages || undefined,
+    linkedin_url: input.linkedinUrl || undefined,
     // Only included when a new photo was picked — see MentorFormInput.
     profile_image: input.profileImage || undefined,
     // Always sent (defaulting to []) so deselecting every expertise actually

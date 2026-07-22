@@ -25,6 +25,7 @@ export interface Mentor {
   profileImageUrl: string | null;
   location: string | null;
   languages: string | null;
+  linkedinUrl: string | null;
   createdAt: string;
   expertises: Expertise[];
 }
@@ -46,6 +47,7 @@ export interface MentorFormInput {
   company?: string;
   location?: string;
   languages?: string;
+  linkedinUrl?: string;
   // Only set when the admin picks a new photo — omitted entirely on submit
   // otherwise so the BFF leaves the existing profileImageUrl untouched.
   profileImage?: {

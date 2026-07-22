@@ -23,6 +23,12 @@ const optionalString = z
   .optional()
   .transform((val) => (val === "" ? undefined : val));
 
+// Empty string -> undefined; otherwise must be a valid URL.
+const optionalUrl = z.preprocess(
+  (val) => (val === "" || val === undefined ? undefined : val),
+  z.string().url({ message: "Enter a valid URL" }).optional()
+);
+
 // Same empty-string -> undefined coercion as optionalNumber, but the result
 // must not be undefined — used for select/number fields that are required.
 const requiredNumber = (message: string) =>
@@ -47,6 +53,7 @@ export const MentorSchema = z.object({
   company: optionalString,
   location: optionalString,
   languages: optionalString,
+  linkedinUrl: optionalUrl,
   expertiseIds: z.array(z.number()).optional(),
 });
 

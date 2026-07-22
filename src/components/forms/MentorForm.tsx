@@ -138,6 +138,7 @@ const MentorForm = ({
       company: data?.company ?? "",
       location: data?.location ?? "",
       languages: data?.languages ?? "",
+      linkedinUrl: data?.linkedinUrl ?? "",
     },
   });
 
@@ -262,6 +263,14 @@ const MentorForm = ({
           defaultValue={data?.languages ?? ""}
           register={register}
           error={errors?.languages}
+        />
+        <InputField
+          label="LinkedIn Profile URL"
+          name="linkedinUrl"
+          defaultValue={data?.linkedinUrl ?? ""}
+          register={register}
+          error={errors?.linkedinUrl}
+          inputProps={{ placeholder: "https://www.linkedin.com/in/username" }}
         />
       </div>
 
