@@ -1,4 +1,5 @@
 import { SessionStatus } from "@/lib/settings";
+import { MenteeSnapshot } from "@/entities/booking-entity";
 
 // A session is the admin-managed entity created for each mentor booking
 // (bookingId links back to it; null for manually-added sessions).
@@ -17,6 +18,7 @@ export interface Session {
   contactedAt: string | null;
   meetingLink: string | null;
   createdAt: string;
+  menteeSnapshot: MenteeSnapshot | null;
 }
 
 // Fields the create/edit session form submits.

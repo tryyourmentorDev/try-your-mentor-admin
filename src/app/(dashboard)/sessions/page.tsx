@@ -6,6 +6,7 @@ import SelectFilter from "@/components/SelectFilter";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import MenteeProfileModal from "@/components/MenteeProfileModal";
 import { getSessionListAction } from "@/actions/session";
 import { getMentorListAction } from "@/actions/mentor";
 import { Session } from "@/entities/session-entity";
@@ -66,6 +67,11 @@ const renderRow = (mentors: Mentor[]) => (item: Session) =>
       </td>
       <td>
         <div className="flex items-center gap-2">
+          <MenteeProfileModal
+            menteeSnapshot={item.menteeSnapshot}
+            menteeName={item.menteeName}
+            menteeEmail={item.menteeEmail}
+          />
           {role === "admin" && (
             <>
               <FormModel table="session" type="update" data={item} id={item.id} mentors={mentors} />

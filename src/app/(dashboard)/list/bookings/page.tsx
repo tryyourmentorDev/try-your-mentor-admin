@@ -3,6 +3,7 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import SelectFilter from "@/components/SelectFilter";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import Table from "@/components/Table";
+import MenteeProfileModal from "@/components/MenteeProfileModal";
 import { getBookingListAction } from "@/actions/booking";
 import { getMentorListAction } from "@/actions/mentor";
 import { Booking } from "@/entities/booking-entity";
@@ -39,6 +40,7 @@ const columns = [
   { header: "Session", accessor: "session", className: "hidden lg:table-cell" },
   { header: "Contacted", accessor: "contacted", className: "hidden lg:table-cell" },
   { header: "Confirmation Email", accessor: "email", className: "hidden lg:table-cell" },
+  { header: "Details", accessor: "details" },
 ];
 
 const renderRow = (item: Booking) => (
@@ -93,6 +95,13 @@ const renderRow = (item: Booking) => (
       ) : (
         <span className="text-gray-400">—</span>
       )}
+    </td>
+    <td>
+      <MenteeProfileModal
+        menteeSnapshot={item.menteeSnapshot}
+        menteeName={item.menteeName}
+        menteeEmail={item.menteeEmail}
+      />
     </td>
   </tr>
 );

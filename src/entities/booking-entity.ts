@@ -1,6 +1,16 @@
 export type BookingStatus = "reserved" | "completed" | "cancelled";
 export type BookingConfirmationEmailStatus = "pending" | "sent" | "failed";
 
+// Point-in-time snapshot of the mentee's onboarding selections, captured on the
+// booking. Older bookings (pre-feature) have menteeSnapshot = null.
+export interface MenteeSnapshot {
+  expertise: string | null;
+  goals: string[] | null;
+  educationLevel: string | null;
+  experienceLevel: string | null;
+  jobRole: string | null;
+}
+
 // A booking is the mentee's raw reservation. Each has one linked session
 // (session_status + contacted) that the admin manages separately.
 export interface Booking {
@@ -21,6 +31,7 @@ export interface Booking {
   sessionId: number | null;
   sessionStatus: string | null;
   contacted: boolean | null;
+  menteeSnapshot: MenteeSnapshot | null;
 }
 
 export interface CreateBookingInput {

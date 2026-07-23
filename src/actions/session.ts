@@ -24,6 +24,7 @@ function mapSession(s: any): Session {
     contactedAt: s.contacted_at ?? null,
     meetingLink: s.meeting_link ?? null,
     createdAt: s.created_at,
+    menteeSnapshot: s.mentee_snapshot ?? null,
   };
 }
 
