@@ -20,13 +20,38 @@ import InputField from "../InputField";
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
-const readFileAsDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
+// Profile pictures are shown small, so we downscale + re-encode client-side
+// before uploading. This keeps the base64 payload tiny (tens of KB) so it stays
+// well under Vercel's ~4.5MB serverless request-body limit — sending the raw
+// file base64 (a 5MB photo ~= 6.7MB base64) triggers FUNCTION_PAYLOAD_TOO_LARGE.
+const MAX_IMAGE_DIMENSION = 512;
+const OUTPUT_IMAGE_MIME = "image/jpeg";
+const OUTPUT_IMAGE_QUALITY = 0.85;
+
+const resizeImageToDataUrl = async (file: File): Promise<string> => {
+  const bitmap = await createImageBitmap(file, {
+    imageOrientation: "from-image",
+  } as ImageBitmapOptions);
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height)
+  );
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close?.();
+    throw new Error("Canvas is not supported in this browser");
+  }
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+
+  return canvas.toDataURL(OUTPUT_IMAGE_MIME, OUTPUT_IMAGE_QUALITY);
+};
 
 const MentorForm = ({
   type,
@@ -112,9 +137,19 @@ const MentorForm = ({
       return;
     }
 
-    const dataUrl = await readFileAsDataUrl(file);
-    setPreviewUrl(dataUrl);
-    setProfileImage({ fileName: file.name, mimeType: file.type, base64: dataUrl });
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setPreviewUrl(dataUrl);
+      const baseName = file.name.replace(/\.[^.]+$/, "");
+      setProfileImage({
+        fileName: `${baseName}.jpg`,
+        mimeType: OUTPUT_IMAGE_MIME,
+        base64: dataUrl,
+      });
+    } catch {
+      setImageError("Could not process that image. Please try another file.");
+      e.target.value = "";
+    }
   };
 
   const {
